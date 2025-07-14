@@ -144,11 +144,12 @@ export default function Generate() {
 
   const handlePreview = () => {
     if (generatedFile?.path) {
-      // Open PDF in new tab for preview
-      const pdfUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/download/${encodeURIComponent(generatedFile.path)}`
+      const filename = generatedFile.path.split('/').pop() || generatedFile.path.split('\\').pop()
+      const pdfUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/download/${encodeURIComponent(filename!)}`
       window.open(pdfUrl, '_blank')
     }
   }
+
 
   const updateForm = (field: keyof GenerationForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
