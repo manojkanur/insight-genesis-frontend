@@ -137,8 +137,8 @@ export default function Generate() {
 
   const handleDownload = () => {
     if (generatedFile?.path) {
-      // Use the full path for download
-      downloadFile(generatedFile.path, `${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`)
+      const filename = generatedFile.path.split('/').pop() || generatedFile.path.split('\\').pop()
+      downloadFile(filename!, `${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`)
     }
   }
 
