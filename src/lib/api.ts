@@ -182,7 +182,7 @@ export const getHealthStatus = async (): Promise<{ status: string; timestamp: st
  */
 export const downloadFile = async (filePath: string): Promise<Blob> => {
   try {
-    const response = await apiClient.get(`/api/${encodeURIComponent(filePath)}`, {
+    const response = await apiClient.get(`/api/download/${encodeURIComponent(filePath)}`, {
       responseType: 'blob',
     })
     return response.data
