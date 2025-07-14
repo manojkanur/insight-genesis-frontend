@@ -22,8 +22,8 @@ import {
   Zap
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useWhitepaperGeneration, useFileDownload } from "@/hooks/useApi"
 import { generateWhitepaper, ApiError } from "@/lib/api"
+import { PdfActions } from "@/components/PdfActions"
 
 interface GenerationForm {
   title: string
@@ -66,9 +66,8 @@ export default function Generate() {
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [generatedFile, setGeneratedFile] = useState<{ path: string; sections: string[] } | null>(null)
+  const [generatedFile, setGeneratedFile] = useState<{ pdf_url: string; filename: string; sections: string[] } | null>(null)
   const { toast } = useToast()
-  const { downloadFile, loading: downloadLoading } = useFileDownload()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -115,7 +114,8 @@ export default function Generate() {
       clearInterval(progressInterval)
       setProgress(100)
       setGeneratedFile({
-        path: response.pdf_path,
+        pdf_url: response.pdf_url,
+        filename: response.filename,
         sections: response.sections
       })
 
@@ -135,20 +135,6 @@ export default function Generate() {
     }
   }
 
-  const handleDownload = () => {
-    if (generatedFile?.path) {
-      const filename = generatedFile.path.split('/').pop() || generatedFile.path.split('\\').pop()
-      downloadFile(filename!, `${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`)
-    }
-  }
-
-  const handlePreview = () => {
-    if (generatedFile?.path) {
-      const filename = generatedFile.path.split('/').pop() || generatedFile.path.split('\\').pop()
-      const pdfUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/download/${encodeURIComponent(filename!)}`
-      window.open(pdfUrl, '_blank')
-    }
-  }
 
 
   const updateForm = (field: keyof GenerationForm, value: string) => {
@@ -358,20 +344,14 @@ export default function Generate() {
                   Your AI-powered whitepaper is ready for download and review.
                 </p>
                 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" variant="success" className="gap-2" onClick={handleDownload} disabled={downloadLoading}>
-                    <Download className="w-5 h-5" />
-                    {downloadLoading ? 'Downloading...' : 'Download PDF'}
-                  </Button>
-                  
-                  <Button size="lg" variant="outline" className="gap-2" onClick={handlePreview}>
-                    <Eye className="w-5 h-5" />
-                    Preview
-                  </Button>
-                </div>
+                <PdfActions 
+                  pdfUrl={generatedFile.pdf_url}
+                  filename={generatedFile.filename}
+                  customFilename={`${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`}
+                />
                 
                 <p className="mt-4 text-sm text-muted-foreground">
-                  File: {generatedFile.path}
+                  File: {generatedFile.filename}
                 </p>
               </div>
             </div>

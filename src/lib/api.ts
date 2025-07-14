@@ -61,7 +61,8 @@ export interface UploadResponse {
 }
 
 export interface GenerateResponse {
-  pdf_path: string
+  pdf_url: string
+  filename: string
   sections: string[]
 }
 
