@@ -137,7 +137,16 @@ export default function Generate() {
 
   const handleDownload = () => {
     if (generatedFile?.path) {
+      // Use the full path for download
       downloadFile(generatedFile.path, `${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`)
+    }
+  }
+
+  const handlePreview = () => {
+    if (generatedFile?.path) {
+      // Open PDF in new tab for preview
+      const pdfUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'}/api/download/${encodeURIComponent(generatedFile.path)}`
+      window.open(pdfUrl, '_blank')
     }
   }
 
@@ -354,7 +363,7 @@ export default function Generate() {
                     {downloadLoading ? 'Downloading...' : 'Download PDF'}
                   </Button>
                   
-                  <Button size="lg" variant="outline" className="gap-2">
+                  <Button size="lg" variant="outline" className="gap-2" onClick={handlePreview}>
                     <Eye className="w-5 h-5" />
                     Preview
                   </Button>
