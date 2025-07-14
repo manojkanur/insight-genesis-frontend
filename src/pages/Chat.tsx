@@ -14,15 +14,19 @@ import {
   MessageCircle,
   Brain,
   Zap,
-  Clock
+  Clock,
+  AlertCircle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useDocumentChat } from "@/hooks/useApi"
+import { chatWithWhitepaper, ApiError } from "@/lib/api"
 
 interface Message {
   id: string
   content: string
   sender: 'user' | 'ai'
   timestamp: Date
+  error?: boolean
 }
 
 const sampleQuestions = [
@@ -50,6 +54,7 @@ export default function Chat() {
   ])
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState<string>("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
@@ -145,7 +150,15 @@ export default function Chat() {
             </CardHeader>
             <CardContent className="space-y-3">
               {uploadedDocuments.map((doc) => (
-                <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div 
+                  key={doc.id} 
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedDocument === doc.id 
+                      ? 'bg-primary/10 border border-primary/20' 
+                      : 'bg-muted/50 hover:bg-muted'
+                  }`}
+                  onClick={() => setSelectedDocument(doc.id)}
+                >
                   <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{doc.name}</p>
@@ -153,6 +166,9 @@ export default function Chat() {
                       Ready
                     </Badge>
                   </div>
+                  {selectedDocument === doc.id && (
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                  )}
                 </div>
               ))}
               
@@ -220,15 +236,23 @@ export default function Chat() {
                     )}
                     
                     <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-first' : ''}`}>
-                      <div
-                        className={`rounded-2xl px-4 py-3 ${
-                          message.sender === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
-                      >
-                        <p className="text-sm leading-relaxed">{message.content}</p>
-                      </div>
+                    <div
+                      className={`rounded-2xl px-4 py-3 ${
+                        message.sender === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : message.error
+                          ? 'bg-destructive/10 border border-destructive/20 text-destructive'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      {message.error && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-xs font-medium">Error</span>
+                        </div>
+                      )}
+                      <p className="text-sm leading-relaxed">{message.content}</p>
+                    </div>
                       <div className={`flex items-center gap-1 mt-1 text-xs text-muted-foreground ${
                         message.sender === 'user' ? 'justify-end' : 'justify-start'
                       }`}>
@@ -293,7 +317,10 @@ export default function Chat() {
               </div>
               
               <p className="text-xs text-muted-foreground mt-2">
-                Press Enter to send, or click one of the sample questions above
+                {selectedDocument 
+                  ? `Chatting with: ${uploadedDocuments.find(d => d.id === selectedDocument)?.name}` 
+                  : "Please select a document above to start chatting"
+                }
               </p>
             </div>
           </Card>

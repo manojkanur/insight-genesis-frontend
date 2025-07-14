@@ -22,6 +22,8 @@ import {
   Zap
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useWhitepaperGeneration, useFileDownload } from "@/hooks/useApi"
+import { generateWhitepaper, ApiError } from "@/lib/api"
 
 interface GenerationForm {
   title: string
@@ -64,8 +66,9 @@ export default function Generate() {
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [generatedFile, setGeneratedFile] = useState<string | null>(null)
+  const [generatedFile, setGeneratedFile] = useState<{ path: string; sections: string[] } | null>(null)
   const { toast } = useToast()
+  const { downloadFile, loading: downloadLoading } = useFileDownload()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,32 +89,56 @@ export default function Generate() {
     setIsGenerating(true)
     setProgress(0)
     
-    // Simulate generation process
-    const steps = [
-      "Analyzing requirements...",
-      "Researching industry trends...",
-      "Structuring content outline...",
-      "Generating introduction...",
-      "Developing main content...",
-      "Creating conclusions...",
-      "Formatting document...",
-      "Finalizing whitepaper..."
-    ]
-    
-    for (let i = 0; i < steps.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setProgress(((i + 1) / steps.length) * 100)
-      
-      if (i === steps.length - 1) {
-        setGeneratedFile(`${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`)
-        toast({
-          title: "Whitepaper generated successfully!",
-          description: "Your AI-powered whitepaper is ready for download.",
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + Math.random() * 10
         })
-      }
+      }, 500)
+
+      // Call real API
+      const response = await generateWhitepaper({
+        title: form.title,
+        industry: form.industry,
+        audience: form.audience,
+        problem_statement: form.problemStatement,
+        solution_outline: form.solutionOutline,
+        tone: form.tone,
+        length: form.length
+      })
+
+      clearInterval(progressInterval)
+      setProgress(100)
+      setGeneratedFile({
+        path: response.pdf_path,
+        sections: response.sections
+      })
+
+      toast({
+        title: "Whitepaper generated successfully!",
+        description: "Your AI-powered whitepaper is ready for download.",
+      })
+    } catch (error) {
+      const apiError = error as ApiError
+      toast({
+        title: "Generation failed",
+        description: apiError.message,
+        variant: "destructive"
+      })
+    } finally {
+      setIsGenerating(false)
     }
-    
-    setIsGenerating(false)
+  }
+
+  const handleDownload = () => {
+    if (generatedFile?.path) {
+      downloadFile(generatedFile.path, `${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`)
+    }
   }
 
   const updateForm = (field: keyof GenerationForm, value: string) => {
@@ -322,9 +349,9 @@ export default function Generate() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" variant="success" className="gap-2">
+                  <Button size="lg" variant="success" className="gap-2" onClick={handleDownload} disabled={downloadLoading}>
                     <Download className="w-5 h-5" />
-                    Download PDF
+                    {downloadLoading ? 'Downloading...' : 'Download PDF'}
                   </Button>
                   
                   <Button size="lg" variant="outline" className="gap-2">
@@ -334,7 +361,7 @@ export default function Generate() {
                 </div>
                 
                 <p className="mt-4 text-sm text-muted-foreground">
-                  File: {generatedFile}
+                  File: {generatedFile.path}
                 </p>
               </div>
             </div>

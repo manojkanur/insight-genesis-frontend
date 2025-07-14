@@ -17,6 +17,8 @@ import {
 } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
+import { useFileUpload } from "@/hooks/useApi"
+import { uploadFile, ApiError } from "@/lib/api"
 
 interface UploadedFile {
   id: string
@@ -26,6 +28,8 @@ interface UploadedFile {
   status: 'uploading' | 'parsing' | 'ready' | 'error'
   progress: number
   preview?: string
+  path?: string // Backend file path
+  error?: string
 }
 
 const statusConfig = {
@@ -62,33 +66,62 @@ export default function Upload() {
     e.preventDefault()
   }, [])
 
-  const simulateUpload = (file: UploadedFile) => {
-    const updateProgress = (progress: number, status: UploadedFile['status']) => {
-      setFiles(prev => prev.map(f => 
-        f.id === file.id ? { ...f, progress, status } : f
-      ))
+  const processFileUpload = async (file: File) => {
+    const fileId = Math.random().toString(36).substring(7)
+    
+    // Add file to list with uploading status
+    const newFile: UploadedFile = {
+      id: fileId,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      status: 'uploading',
+      progress: 0
     }
 
-    // Simulate upload progress
-    let progress = 0
-    const uploadInterval = setInterval(() => {
-      progress += Math.random() * 20
-      if (progress >= 100) {
-        clearInterval(uploadInterval)
-        updateProgress(100, 'parsing')
+    setFiles(prev => [...prev, newFile])
+
+    try {
+      // Update progress to show upload starting
+      setFiles(prev => prev.map(f => 
+        f.id === fileId ? { ...f, progress: 10 } : f
+      ))
+
+      // Call the real API
+      const response = await uploadFile(file)
+      
+      // Update to parsing status
+      setFiles(prev => prev.map(f => 
+        f.id === fileId ? { 
+          ...f, 
+          progress: 100, 
+          status: 'parsing',
+          path: response.path 
+        } : f
+      ))
+
+      // Simulate parsing time (in production, you might poll for status)
+      setTimeout(() => {
+        setFiles(prev => prev.map(f => 
+          f.id === fileId ? { ...f, status: 'ready' } : f
+        ))
         
-        // Simulate parsing
-        setTimeout(() => {
-          updateProgress(100, 'ready')
-          toast({
-            title: "File processed successfully",
-            description: `${file.name} is ready for analysis.`,
-          })
-        }, 2000)
-      } else {
-        updateProgress(progress, 'uploading')
-      }
-    }, 300)
+        toast({
+          title: "File processed successfully",
+          description: `${file.name} is ready for analysis.`,
+        })
+      }, 2000)
+
+    } catch (error) {
+      const apiError = error as ApiError
+      setFiles(prev => prev.map(f => 
+        f.id === fileId ? { 
+          ...f, 
+          status: 'error', 
+          error: apiError.message 
+        } : f
+      ))
+    }
   }
 
   const handleFileSelect = (selectedFiles: FileList) => {
@@ -113,17 +146,8 @@ export default function Upload() {
         return
       }
 
-      const newFile: UploadedFile = {
-        id: Math.random().toString(36).substring(7),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        status: 'uploading',
-        progress: 0
-      }
-
-      setFiles(prev => [...prev, newFile])
-      simulateUpload(newFile)
+      // Process the file upload
+      processFileUpload(file)
     })
   }
 
