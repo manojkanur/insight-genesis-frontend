@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { 
-  Home, 
   Upload, 
   FileText, 
   MessageCircle, 
@@ -28,12 +27,6 @@ import {
 import { Button } from "@/components/ui/button"
 
 const navigation = [
-  { 
-    title: "Dashboard", 
-    url: "/", 
-    icon: Home,
-    description: "Overview and analytics"
-  },
   { 
     title: "Upload", 
     url: "/upload", 
