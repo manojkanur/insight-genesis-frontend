@@ -1,150 +1,63 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* SaaS Platform Design System - Professional AI/Tech Theme */
-
 @layer base {
   :root {
-    /* Core Background & Text */
     --background: 0 0% 100%;
-    --foreground: 225 15% 15%;
-
-    /* Card & Surface Colors */
+    --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 225 15% 15%;
-    --surface: 240 10% 98%;
-    --surface-foreground: 225 15% 25%;
-
-    /* Popover Colors */
+    --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 225 15% 15%;
-
-    /* Brand Primary - Rich Purple for AI/Tech */
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 262 83% 68%;
-    --primary-dark: 262 83% 48%;
-
-    /* Secondary - Elegant Blue */
-    --secondary: 213 27% 84%;
-    --secondary-foreground: 225 15% 25%;
-
-    /* Muted Colors */
-    --muted: 220 13% 96%;
-    --muted-foreground: 220 9% 46%;
-
-    /* Accent - Vibrant Blue for CTAs */
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 100%;
-
-    /* Status Colors */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    /* Border & Input */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262 83% 58%;
-
-    /* Gradients for Modern SaaS Look */
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(217 91% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(217 91% 60%) 50%, hsl(262 83% 68%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(240 10% 98%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(240 10% 98%) 0%, hsl(220 13% 96%) 100%);
-
-    /* Shadows for Depth */
-    --shadow-sm: 0 1px 2px 0 hsl(220 13% 91% / 0.5);
-    --shadow-md: 0 4px 6px -1px hsl(220 13% 91% / 0.6), 0 2px 4px -1px hsl(220 13% 91% / 0.4);
-    --shadow-lg: 0 10px 15px -3px hsl(220 13% 91% / 0.7), 0 4px 6px -2px hsl(220 13% 91% / 0.3);
-    --shadow-glow: 0 0 40px hsl(262 83% 58% / 0.3);
-    --shadow-primary: 0 8px 30px hsl(262 83% 58% / 0.2);
-
-    /* Animation Variables */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* Dark Theme Colors */
-    --background: 225 15% 8%;
-    --foreground: 0 0% 95%;
-
-    --card: 225 15% 10%;
-    --card-foreground: 0 0% 95%;
-    --surface: 225 15% 12%;
-    --surface-foreground: 0 0% 85%;
-
-    --popover: 225 15% 10%;
-    --popover-foreground: 0 0% 95%;
-
-    --primary: 262 83% 68%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 262 83% 78%;
-    --primary-dark: 262 83% 58%;
-
-    --secondary: 225 15% 20%;
-    --secondary-foreground: 0 0% 85%;
-
-    --muted: 225 15% 15%;
-    --muted-foreground: 225 5% 65%;
-
-    --accent: 217 91% 65%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 65%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 142 76% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 60%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 225 15% 20%;
-    --input: 225 15% 20%;
-    --ring: 262 83% 68%;
-
-    /* Dark Mode Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 68%), hsl(217 91% 65%));
-    --gradient-hero: linear-gradient(135deg, hsl(262 83% 68%) 0%, hsl(217 91% 65%) 50%, hsl(262 83% 78%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(225 15% 10%) 0%, hsl(225 15% 12%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(225 15% 12%) 0%, hsl(225 15% 15%) 100%);
-
-    /* Dark Mode Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(225 15% 5% / 0.8);
-    --shadow-md: 0 4px 6px -1px hsl(225 15% 5% / 0.9), 0 2px 4px -1px hsl(225 15% 5% / 0.6);
-    --shadow-lg: 0 10px 15px -3px hsl(225 15% 5% / 0.9), 0 4px 6px -2px hsl(225 15% 5% / 0.4);
-    --shadow-glow: 0 0 40px hsl(262 83% 68% / 0.4);
-    --shadow-primary: 0 8px 30px hsl(262 83% 68% / 0.3);
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -152,62 +65,62 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
-  }
-
-  h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
-  }
-
-  h2 {
-    @apply text-3xl md:text-4xl lg:text-5xl;
-  }
-
-  h3 {
-    @apply text-2xl md:text-3xl;
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
   }
 }
 
-@layer components {
-  /* Custom Component Styles */
-  .hero-gradient {
-    background: var(--gradient-hero);
-  }
+/* Rich Text Editor Styling */
+.ql-toolbar {
+  @apply border-border;
+}
 
-  .card-gradient {
-    background: var(--gradient-card);
-  }
+.ql-container {
+  @apply border-border;
+}
 
-  .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-[var(--shadow-primary)] transition-[var(--transition-smooth)];
-  }
+.ql-editor {
+  @apply text-foreground;
+}
 
-  .btn-accent {
-    @apply bg-accent text-accent-foreground hover:bg-accent/90 shadow-[var(--shadow-md)] transition-[var(--transition-smooth)];
-  }
+.ql-editor.ql-blank::before {
+  @apply text-muted-foreground;
+}
 
-  .glass-effect {
-    @apply backdrop-blur-sm bg-white/10 border border-white/20;
-  }
+.quill-wrapper {
+  @apply border border-border rounded-md overflow-hidden;
+}
 
-  .hover-lift {
-    @apply hover:translate-y-[-2px] hover:shadow-[var(--shadow-lg)] transition-[var(--transition-smooth)];
-  }
+.quill-wrapper .ql-toolbar {
+  @apply border-none border-b border-border bg-muted/30;
+}
 
-  .text-gradient {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+.quill-wrapper .ql-container {
+  @apply border-none;
+}
 
-  .glow {
-    box-shadow: var(--shadow-glow);
-  }
+/* Custom styles for better integration */
+.prose {
+  max-width: none;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  @apply text-foreground;
+}
+
+.prose p {
+  @apply text-foreground;
+}
+
+.prose ul, .prose ol {
+  @apply text-foreground;
+}
+
+.prose strong {
+  @apply text-foreground font-semibold;
+}
+
+.prose em {
+  @apply text-foreground;
 }

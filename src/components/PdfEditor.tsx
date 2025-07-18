@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -10,25 +8,30 @@ import {
   Edit3, 
   Save,
   FileText,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { PdfContent, saveWhitepaperContent } from "@/lib/api"
+import { RichPdfContent, saveRichContent, exportDocument } from "@/lib/api"
 import { PdfViewer } from "./PdfViewer"
 import { PdfActions } from "./PdfActions"
+import { RichTextEditor } from "./RichTextEditor"
+import { DocumentConverter } from "./DocumentConverter"
+import { EditingToolbar } from "./EditingToolbar"
 
 interface PdfEditorProps {
   pdfUrl: string
   filename: string
-  initialContent?: PdfContent
+  initialContent?: RichPdfContent
   title: string
 }
 
 export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [currentPdfUrl, setCurrentPdfUrl] = useState(pdfUrl)
-  const [content, setContent] = useState<PdfContent>(
+  const [content, setContent] = useState<RichPdfContent>(
     initialContent || {
       title: title || "Untitled Whitepaper",
       abstract: "Abstract content will appear here...",
@@ -49,17 +52,17 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
 
   const sections = [
     { key: 'title', label: 'Title', type: 'input' },
-    { key: 'abstract', label: 'Abstract', type: 'textarea' },
-    { key: 'introduction', label: 'Introduction', type: 'textarea' },
-    { key: 'methodology', label: 'Methodology', type: 'textarea' },
-    { key: 'results', label: 'Results', type: 'textarea' },
-    { key: 'conclusion', label: 'Conclusion', type: 'textarea' }
+    { key: 'abstract', label: 'Abstract', type: 'richtext' },
+    { key: 'introduction', label: 'Introduction', type: 'richtext' },
+    { key: 'methodology', label: 'Methodology', type: 'richtext' },
+    { key: 'results', label: 'Results', type: 'richtext' },
+    { key: 'conclusion', label: 'Conclusion', type: 'richtext' }
   ]
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await saveWhitepaperContent({
+      const response = await saveRichContent({
         filename,
         content
       })
@@ -82,8 +85,77 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
     }
   }
 
-  const updateContent = (key: keyof PdfContent, value: string) => {
+  const handleExportPdf = async () => {
+    setIsExporting(true)
+    try {
+      const response = await exportDocument({
+        filename,
+        format: 'pdf',
+        content
+      })
+      
+      // Download the file
+      const link = document.createElement('a')
+      link.href = response.download_url
+      link.download = response.filename
+      link.click()
+      
+      toast({
+        title: "PDF exported",
+        description: "Your whitepaper has been exported as PDF.",
+      })
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Unable to export PDF. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleExportWord = async () => {
+    setIsExporting(true)
+    try {
+      const response = await exportDocument({
+        filename,
+        format: 'word',
+        content
+      })
+      
+      // Download the file
+      const link = document.createElement('a')
+      link.href = response.download_url
+      link.download = response.filename
+      link.click()
+      
+      toast({
+        title: "Word document exported",
+        description: "Your whitepaper has been exported as Word document.",
+      })
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Unable to export Word document. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const updateContent = (key: keyof RichPdfContent, value: string) => {
     setContent(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleConversionComplete = (wordContent: string) => {
+    // Update the abstract with converted content as an example
+    setContent(prev => ({ 
+      ...prev, 
+      abstract: wordContent 
+    }))
+    setIsEditing(true)
   }
 
   const customFilename = `${content.title.replace(/\s+/g, '_')}_whitepaper.pdf`
@@ -142,12 +214,23 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
         </div>
       </div>
 
+      {/* Editing Toolbar */}
+      {isEditing && (
+        <EditingToolbar
+          onSave={handleSave}
+          onExportPdf={handleExportPdf}
+          onExportWord={handleExportWord}
+          isSaving={isSaving || isExporting}
+        />
+      )}
+
       {/* Content */}
       <div className="flex-1 overflow-auto">
         <Tabs defaultValue="content" className="h-full">
           <TabsList className="w-full justify-start px-4 pt-4">
             <TabsTrigger value="content">Edit Content</TabsTrigger>
             <TabsTrigger value="preview">PDF Preview</TabsTrigger>
+            <TabsTrigger value="convert">Document Conversion</TabsTrigger>
           </TabsList>
           
           <TabsContent value="content" className="p-4 space-y-6">
@@ -160,23 +243,25 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
                   {isEditing ? (
                     section.type === 'input' ? (
                       <Input
-                        value={content[section.key as keyof PdfContent] as string}
-                        onChange={(e) => updateContent(section.key as keyof PdfContent, e.target.value)}
+                        value={content[section.key as keyof RichPdfContent] as string}
+                        onChange={(e) => updateContent(section.key as keyof RichPdfContent, e.target.value)}
                         className="text-base"
                       />
                     ) : (
-                      <Textarea
-                        value={content[section.key as keyof PdfContent] as string}
-                        onChange={(e) => updateContent(section.key as keyof PdfContent, e.target.value)}
-                        rows={6}
-                        className="resize-none"
+                      <RichTextEditor
+                        value={content[section.key as keyof RichPdfContent] as string}
+                        onChange={(value) => updateContent(section.key as keyof RichPdfContent, value)}
+                        height="200px"
                       />
                     )
                   ) : (
                     <div className="prose prose-sm max-w-none">
-                      <p className="whitespace-pre-wrap">
-                        {content[section.key as keyof PdfContent] as string}
-                      </p>
+                      <div 
+                        className="whitespace-pre-wrap"
+                        dangerouslySetInnerHTML={{
+                          __html: content[section.key as keyof RichPdfContent] as string
+                        }}
+                      />
                     </div>
                   )}
                 </CardContent>
@@ -196,6 +281,14 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
             <PdfViewer 
               pdfUrl={currentPdfUrl}
               className="h-full"
+            />
+          </TabsContent>
+
+          <TabsContent value="convert" className="p-4">
+            <DocumentConverter
+              pdfUrl={currentPdfUrl}
+              filename={filename}
+              onConversionComplete={handleConversionComplete}
             />
           </TabsContent>
         </Tabs>

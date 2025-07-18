@@ -83,6 +83,41 @@ export interface ChatResponse {
   context_used: string
 }
 
+export interface RichPdfContent {
+  title: string
+  abstract: string
+  introduction: string
+  methodology: string
+  results: string
+  conclusion: string
+  references: string[]
+  formatting?: DocumentFormatting
+}
+
+export interface DocumentFormatting {
+  fontSize: number
+  fontFamily: string
+  lineSpacing: number
+  margins: {
+    top: number
+    bottom: number
+    left: number
+    right: number
+  }
+}
+
+export interface ConversionResponse {
+  word_content: string
+  original_pdf: string
+  converted_at: string
+}
+
+export interface ExportResponse {
+  download_url: string
+  filename: string
+  format: 'pdf' | 'word'
+}
+
 // API Error Class
 export class ApiError extends Error {
   constructor(
@@ -212,6 +247,70 @@ export const downloadFile = async (filePath: string): Promise<Blob> => {
   try {
     const response = await apiClient.get(`/api/download/${encodeURIComponent(filePath)}`, {
       responseType: 'blob',
+    })
+    return response.data
+  } catch (error) {
+    handleApiError(error as AxiosError)
+  }
+}
+
+/**
+ * Convert PDF to Word format for editing
+ */
+export const convertPdfToWord = async (pdfPath: string): Promise<ConversionResponse> => {
+  try {
+    const response = await apiClient.post<ConversionResponse>('/api/pdf-to-word', {
+      pdf_path: pdfPath
+    })
+    return response.data
+  } catch (error) {
+    handleApiError(error as AxiosError)
+  }
+}
+
+/**
+ * Convert edited Word content back to PDF
+ */
+export const convertWordToPdf = async (data: {
+  word_content: string
+  filename: string
+  formatting?: DocumentFormatting
+}): Promise<ExportResponse> => {
+  try {
+    const response = await apiClient.post<ExportResponse>('/api/word-to-pdf', data)
+    return response.data
+  } catch (error) {
+    handleApiError(error as AxiosError)
+  }
+}
+
+/**
+ * Save rich text content and regenerate document
+ */
+export const saveRichContent = async (data: {
+  filename: string
+  content: RichPdfContent
+}): Promise<GenerateResponse> => {
+  try {
+    const response = await apiClient.post<GenerateResponse>('/api/save-rich-content', data)
+    return response.data
+  } catch (error) {
+    handleApiError(error as AxiosError)
+  }
+}
+
+/**
+ * Export document in specified format
+ */
+export const exportDocument = async (data: {
+  filename: string
+  format: 'pdf' | 'word'
+  content: RichPdfContent
+}): Promise<ExportResponse> => {
+  try {
+    const response = await apiClient.post<ExportResponse>(`/api/export/${data.format}`, {
+      filename: data.filename,
+      content: data.content
     })
     return response.data
   } catch (error) {
