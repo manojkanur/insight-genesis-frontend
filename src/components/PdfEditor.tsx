@@ -4,48 +4,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { 
   Edit3, 
-  Download, 
-  Save, 
-  Eye,
+  Save,
   FileText,
   RefreshCw
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-
-interface PdfContent {
-  title: string
-  abstract: string
-  introduction: string
-  methodology: string
-  results: string
-  conclusion: string
-  references: string[]
-}
+import { PdfContent, saveWhitepaperContent } from "@/lib/api"
+import { PdfViewer } from "./PdfViewer"
+import { PdfActions } from "./PdfActions"
 
 interface PdfEditorProps {
   pdfUrl: string
   filename: string
-  onDownload: () => void
+  initialContent?: PdfContent
+  title: string
 }
 
-export function PdfEditor({ pdfUrl, filename, onDownload }: PdfEditorProps) {
+export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [content, setContent] = useState<PdfContent>({
-    title: "Sample Whitepaper Title",
-    abstract: "This is the abstract section of the whitepaper...",
-    introduction: "Introduction section content...",
-    methodology: "Methodology section content...",
-    results: "Results and findings...",
-    conclusion: "Conclusion and recommendations...",
-    references: ["Reference 1", "Reference 2"]
-  })
+  const [currentPdfUrl, setCurrentPdfUrl] = useState(pdfUrl)
+  const [content, setContent] = useState<PdfContent>(
+    initialContent || {
+      title: title || "Untitled Whitepaper",
+      abstract: "Abstract content will appear here...",
+      introduction: "Introduction content will appear here...",
+      methodology: "Methodology content will appear here...",
+      results: "Results content will appear here...",
+      conclusion: "Conclusion content will appear here...",
+      references: []
+    }
+  )
   const { toast } = useToast()
+
+  useEffect(() => {
+    if (initialContent) {
+      setContent(initialContent)
+    }
+  }, [initialContent])
 
   const sections = [
     { key: 'title', label: 'Title', type: 'input' },
@@ -59,12 +59,16 @@ export function PdfEditor({ pdfUrl, filename, onDownload }: PdfEditorProps) {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      // Simulate save operation
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      const response = await saveWhitepaperContent({
+        filename,
+        content
+      })
+      
+      setCurrentPdfUrl(response.pdf_url)
       
       toast({
         title: "Content saved",
-        description: "Your whitepaper changes have been saved successfully.",
+        description: "Your whitepaper has been updated and regenerated.",
       })
       setIsEditing(false)
     } catch (error) {
@@ -81,6 +85,8 @@ export function PdfEditor({ pdfUrl, filename, onDownload }: PdfEditorProps) {
   const updateContent = (key: keyof PdfContent, value: string) => {
     setContent(prev => ({ ...prev, [key]: value }))
   }
+
+  const customFilename = `${content.title.replace(/\s+/g, '_')}_whitepaper.pdf`
 
   return (
     <div className="flex flex-col h-full">
@@ -129,20 +135,10 @@ export function PdfEditor({ pdfUrl, filename, onDownload }: PdfEditorProps) {
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                Save
+                Save & Regenerate
               </Button>
             </div>
           )}
-          
-          <Button
-            variant="hero"
-            size="sm"
-            onClick={onDownload}
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Download
-          </Button>
         </div>
       </div>
 
@@ -150,7 +146,7 @@ export function PdfEditor({ pdfUrl, filename, onDownload }: PdfEditorProps) {
       <div className="flex-1 overflow-auto">
         <Tabs defaultValue="content" className="h-full">
           <TabsList className="w-full justify-start px-4 pt-4">
-            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="content">Edit Content</TabsTrigger>
             <TabsTrigger value="preview">PDF Preview</TabsTrigger>
           </TabsList>
           
@@ -186,22 +182,21 @@ export function PdfEditor({ pdfUrl, filename, onDownload }: PdfEditorProps) {
                 </CardContent>
               </Card>
             ))}
+            
+            <div className="pt-4">
+              <PdfActions
+                pdfUrl={currentPdfUrl}
+                filename={filename}
+                customFilename={customFilename}
+              />
+            </div>
           </TabsContent>
           
           <TabsContent value="preview" className="p-4">
-            <Card className="h-full">
-              <CardContent className="p-6 h-full">
-                <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center space-y-2">
-                    <Eye className="w-12 h-12 text-muted-foreground mx-auto" />
-                    <p className="text-muted-foreground">PDF Preview</p>
-                    <p className="text-sm text-muted-foreground">
-                      Full PDF preview will be displayed here
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PdfViewer 
+              pdfUrl={currentPdfUrl}
+              className="h-full"
+            />
           </TabsContent>
         </Tabs>
       </div>

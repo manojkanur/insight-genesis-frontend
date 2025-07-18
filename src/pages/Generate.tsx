@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -5,25 +6,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { 
   FileText, 
   Loader2, 
-  CheckCircle, 
-  Download, 
-  Eye, 
   Sparkles,
-  Target,
-  Users,
-  Building,
   Lightbulb,
   Zap
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { generateWhitepaper, ApiError } from "@/lib/api"
-import { TemplateSelector, PdfTemplate } from "@/components/TemplateSelector"
+import { generateWhitepaper, ApiError, GenerateResponse } from "@/lib/api"
+import { TemplateSelector } from "@/components/TemplateSelector"
 import { PdfEditor } from "@/components/PdfEditor"
 
 interface GenerationForm {
@@ -68,7 +61,7 @@ export default function Generate() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [generatedFile, setGeneratedFile] = useState<{ pdf_url: string; filename: string } | null>(null)
+  const [generatedFile, setGeneratedFile] = useState<GenerateResponse | null>(null)
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,10 +118,7 @@ export default function Generate() {
 
       clearInterval(progressInterval)
       setProgress(100)
-      setGeneratedFile({
-        pdf_url: response.pdf_url,
-        filename: response.filename
-      })
+      setGeneratedFile(response)
 
       toast({
         title: "Whitepaper generated successfully!",
@@ -143,38 +133,6 @@ export default function Generate() {
       })
     } finally {
       setIsGenerating(false)
-    }
-  }
-
-  const handleDownload = async () => {
-    if (!generatedFile) return
-    
-    try {
-      const response = await fetch(generatedFile.pdf_url)
-      if (!response.ok) throw new Error('Failed to fetch PDF')
-      
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${form.title.replace(/\s+/g, '_')}_whitepaper.pdf`
-      document.body.appendChild(link)
-      link.click()
-      
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      
-      toast({
-        title: "Download started",
-        description: "Your PDF is being downloaded.",
-      })
-    } catch (error) {
-      toast({
-        title: "Download failed",
-        description: "Unable to download the PDF. Please try again.",
-        variant: "destructive"
-      })
     }
   }
 
@@ -344,7 +302,6 @@ export default function Generate() {
                 </div>
               </form>
             ) : (
-              
               <Card>
                 <CardContent className="py-12">
                   <div className="text-center space-y-6">
@@ -371,11 +328,11 @@ export default function Generate() {
             )}
           </div>
         ) : (
-          
           <PdfEditor 
             pdfUrl={generatedFile.pdf_url}
             filename={generatedFile.filename}
-            onDownload={handleDownload}
+            initialContent={generatedFile.content}
+            title={form.title}
           />
         )}
       </div>

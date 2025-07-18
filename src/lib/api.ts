@@ -60,10 +60,21 @@ export interface UploadResponse {
   message: string
 }
 
+export interface PdfContent {
+  title: string
+  abstract: string
+  introduction: string
+  methodology: string
+  results: string
+  conclusion: string
+  references: string[]
+}
+
 export interface GenerateResponse {
   pdf_url: string
   filename: string
-  sections: string[]
+  content?: PdfContent
+  sections?: string[]
 }
 
 export interface ChatResponse {
@@ -139,9 +150,25 @@ export const generateWhitepaper = async (data: {
   solution_outline: string
   tone?: string
   length?: string
+  template?: string
 }): Promise<GenerateResponse> => {
   try {
     const response = await apiClient.post<GenerateResponse>('/api/generate', data)
+    return response.data
+  } catch (error) {
+    handleApiError(error as AxiosError)
+  }
+}
+
+/**
+ * Save edited content and regenerate PDF
+ */
+export const saveWhitepaperContent = async (data: {
+  filename: string
+  content: PdfContent
+}): Promise<GenerateResponse> => {
+  try {
+    const response = await apiClient.post<GenerateResponse>('/api/save-content', data)
     return response.data
   } catch (error) {
     handleApiError(error as AxiosError)
