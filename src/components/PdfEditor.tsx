@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -31,6 +32,7 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [currentPdfUrl, setCurrentPdfUrl] = useState(pdfUrl)
+  const [activeTab, setActiveTab] = useState("content")
   const [content, setContent] = useState<RichPdfContent>(
     initialContent || {
       title: title || "Untitled Whitepaper",
@@ -156,6 +158,15 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
       abstract: wordContent 
     }))
     setIsEditing(true)
+    setActiveTab("convert")
+  }
+
+  const handleConvertedContentUpdate = (updatedContent: string) => {
+    // Update content when user edits the converted document
+    setContent(prev => ({
+      ...prev,
+      abstract: updatedContent
+    }))
   }
 
   const customFilename = `${content.title.replace(/\s+/g, '_')}_whitepaper.pdf`
@@ -226,7 +237,7 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <Tabs defaultValue="content" className="h-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <TabsList className="w-full justify-start px-4 pt-4">
             <TabsTrigger value="content">Edit Content</TabsTrigger>
             <TabsTrigger value="preview">PDF Preview</TabsTrigger>
@@ -289,6 +300,7 @@ export function PdfEditor({ pdfUrl, filename, initialContent, title }: PdfEditor
               pdfUrl={currentPdfUrl}
               filename={filename}
               onConversionComplete={handleConversionComplete}
+              onContentUpdate={handleConvertedContentUpdate}
             />
           </TabsContent>
         </Tabs>
