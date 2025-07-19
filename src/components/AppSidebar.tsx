@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { 
   Upload, 
@@ -6,7 +7,8 @@ import {
   Settings, 
   Menu,
   Sparkles,
-  Zap
+  Zap,
+  Home
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -27,6 +29,12 @@ import {
 import { Button } from "@/components/ui/button"
 
 const navigation = [
+  { 
+    title: "Dashboard", 
+    url: "/", 
+    icon: Home,
+    description: "Overview and analytics"
+  },
   { 
     title: "Upload", 
     url: "/upload", 
@@ -77,7 +85,7 @@ export function AppSidebar() {
           </div>
           {!isCollapsed && (
             <div>
-              <h2 className="text-lg font-semibold text-gradient">WhitePaper AI</h2>
+              <h2 className="text-lg font-semibold gradient-text">WhitePaper AI</h2>
               <p className="text-xs text-muted-foreground">Intelligence Platform</p>
             </div>
           )}
