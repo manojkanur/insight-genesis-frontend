@@ -1,5 +1,5 @@
 
-import { FileText, Upload, MessageSquare, Layout } from "lucide-react"
+import { FileText, Upload, Layout } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
@@ -21,13 +21,6 @@ const actions = [
     variant: "outline" as const
   },
   {
-    title: "AI Chat",
-    description: "Ask questions about your documents",
-    icon: MessageSquare,
-    href: "/chat",
-    variant: "outline" as const
-  },
-  {
     title: "Browse Templates",
     description: "Choose from professional templates",
     icon: Layout,
@@ -42,7 +35,7 @@ export function QuickActions() {
   return (
     <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
       <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {actions.map((action, index) => (
           <Card 
             key={action.title} 
