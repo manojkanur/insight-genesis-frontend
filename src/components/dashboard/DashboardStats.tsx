@@ -1,53 +1,36 @@
 
-import { FileText, Clock, Users, Target } from "lucide-react"
-import { StatCard } from "@/components/ui/stat-card"
-
 const stats = [
   {
-    title: "Documents Processed",
-    value: "10,247",
-    description: "Total documents analyzed",
-    icon: <FileText className="h-6 w-6" />,
-    trend: { value: 12.5, isPositive: true }
+    value: "10,000+",
+    label: "Documents Processed"
   },
   {
-    title: "Hours Saved",
-    value: "52,340",
-    description: "Time saved through automation",
-    icon: <Clock className="h-6 w-6" />,
-    trend: { value: 8.2, isPositive: true }
+    value: "50,000+",
+    label: "Hours Saved"
   },
   {
-    title: "Active Users",
-    value: "2,547",
-    description: "Users this month",
-    icon: <Users className="h-6 w-6" />,
-    trend: { value: 15.3, isPositive: true }
+    value: "2,500+",
+    label: "Active Users"
   },
   {
-    title: "Accuracy Rate",
     value: "99.2%",
-    description: "AI processing accuracy",
-    icon: <Target className="h-6 w-6" />,
-    trend: { value: 0.3, isPositive: true }
+    label: "Accuracy Rate"
   }
 ]
 
 export function DashboardStats() {
   return (
-    <div className="animate-fade-in">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="max-w-6xl mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-16">
         {stats.map((stat, index) => (
-          <StatCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            description={stat.description}
-            icon={stat.icon}
-            trend={stat.trend}
-            className="animate-scale-in"
-            style={{ animationDelay: `${index * 100}ms` }}
-          />
+          <div key={index} className="text-center space-y-2">
+            <div className="text-3xl md:text-4xl font-bold text-foreground">
+              {stat.value}
+            </div>
+            <div className="text-sm md:text-base text-muted-foreground">
+              {stat.label}
+            </div>
+          </div>
         ))}
       </div>
     </div>

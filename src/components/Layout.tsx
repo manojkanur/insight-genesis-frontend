@@ -1,7 +1,8 @@
+
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/AppSidebar"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Bell, User } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useState, useEffect } from "react"
 
 interface LayoutProps {
@@ -30,39 +31,21 @@ export function Layout({ children }: LayoutProps) {
         <AppSidebar />
         
         <div className="flex flex-col flex-1">
-          {/* Header */}
-          <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-14 items-center px-4 gap-4">
-              <SidebarTrigger className="hover:bg-accent hover:text-accent-foreground" />
+          {/* Simplified Header */}
+          <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex h-14 items-center px-6 gap-4">
+              <SidebarTrigger className="hover:bg-muted" />
               
               <div className="flex-1" />
               
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleTheme}
-                  className="hover:bg-accent hover:text-accent-foreground"
-                >
-                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-accent hover:text-accent-foreground"
-                >
-                  <Bell className="h-4 w-4" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-accent hover:text-accent-foreground"
-                >
-                  <User className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="hover:bg-muted"
+              >
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
             </div>
           </header>
 
