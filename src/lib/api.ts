@@ -1,12 +1,14 @@
+
 import axios, { AxiosResponse, AxiosError } from 'axios'
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'
+const API_TIMEOUT = 120000 // 2 minutes timeout for all operations
 
 // Create axios instance with default config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 120000, // 2 minutes timeout for PDF generation
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,6 +18,8 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`)
+    // Ensure timeout is always set
+    config.timeout = config.timeout || API_TIMEOUT
     return config
   },
   (error) => {
@@ -32,6 +36,11 @@ apiClient.interceptors.response.use(
   },
   (error: AxiosError) => {
     console.error('❌ Response Error:', error.response?.status, error.message)
+    
+    // Handle timeout errors specifically
+    if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+      console.error('Request timed out after 2 minutes')
+    }
     
     // Handle common HTTP errors
     if (error.response?.status === 401) {
@@ -132,6 +141,10 @@ export class ApiError extends Error {
 
 // Helper function to handle API errors
 const handleApiError = (error: AxiosError): never => {
+  if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+    throw new ApiError('Request timed out. The operation is taking longer than expected. Please try again.', 408)
+  }
+  
   if (error.response) {
     // Server responded with error status
     const responseData = error.response.data as any
@@ -160,7 +173,7 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 120000, // 2 minutes for file upload
+      timeout: API_TIMEOUT,
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -190,7 +203,7 @@ export const generateWhitepaper = async (data: {
 }): Promise<GenerateResponse> => {
   try {
     const response = await apiClient.post<GenerateResponse>('/api/generate', data, {
-      timeout: 120000, // 2 minutes for PDF generation
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -207,7 +220,7 @@ export const saveWhitepaperContent = async (data: {
 }): Promise<GenerateResponse> => {
   try {
     const response = await apiClient.post<GenerateResponse>('/api/save-content', data, {
-      timeout: 120000, // 2 minutes for PDF regeneration
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -226,6 +239,8 @@ export const chatWithWhitepaper = async (
     const response = await apiClient.post<ChatResponse>('/api/chat', {
       question,
       doc_path: docPath,
+    }, {
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -238,7 +253,9 @@ export const chatWithWhitepaper = async (
  */
 export const getHealthStatus = async (): Promise<{ status: string; timestamp: string }> => {
   try {
-    const response = await apiClient.get('/api/health')
+    const response = await apiClient.get('/api/health', {
+      timeout: 30000, // Health check can be shorter
+    })
     return response.data
   } catch (error) {
     handleApiError(error as AxiosError)
@@ -252,7 +269,7 @@ export const downloadFile = async (filePath: string): Promise<Blob> => {
   try {
     const response = await apiClient.get(`/api/download/${encodeURIComponent(filePath)}`, {
       responseType: 'blob',
-      timeout: 120000, // 2 minutes for file download
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -268,7 +285,7 @@ export const convertPdfToWord = async (pdfPath: string): Promise<ConversionRespo
     const response = await apiClient.post<ConversionResponse>('/api/pdf-to-word', {
       pdf_path: pdfPath
     }, {
-      timeout: 120000, // 2 minutes for PDF to Word conversion
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -286,7 +303,7 @@ export const convertWordToPdf = async (data: {
 }): Promise<ExportResponse> => {
   try {
     const response = await apiClient.post<ExportResponse>('/api/word-to-pdf', data, {
-      timeout: 120000, // 2 minutes for Word to PDF conversion
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -303,7 +320,7 @@ export const saveRichContent = async (data: {
 }): Promise<GenerateResponse> => {
   try {
     const response = await apiClient.post<GenerateResponse>('/api/save-rich-content', data, {
-      timeout: 120000, // 2 minutes for rich content processing
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -324,7 +341,7 @@ export const exportDocument = async (data: {
       filename: data.filename,
       content: data.content
     }, {
-      timeout: 120000, // 2 minutes for document export
+      timeout: API_TIMEOUT,
     })
     return response.data
   } catch (error) {
@@ -340,3 +357,4 @@ export const isDevelopment = import.meta.env.MODE === 'development'
 export const API_URL = API_BASE_URL
 
 console.log(`🔗 API Base URL: ${API_BASE_URL}`)
+console.log(`⏱️ API Timeout: ${API_TIMEOUT}ms (2 minutes)`)
