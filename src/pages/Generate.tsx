@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { generateWhitepaper, ApiError, GenerateResponse } from "@/lib/api"
 import { TemplateSelector } from "@/components/TemplateSelector"
+import { PdfEditor } from "@/components/PdfEditor"
 
 interface GenerationForm {
   title: string
@@ -121,7 +122,7 @@ export default function Generate() {
 
       toast({
         title: "Whitepaper generated successfully!",
-        description: "Your AI-powered whitepaper is ready for download.",
+        description: "Your AI-powered whitepaper is ready for review and editing.",
       })
     } catch (error) {
       const apiError = error as ApiError
@@ -294,7 +295,7 @@ export default function Generate() {
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button type="submit" size="lg" className="gap-2 bg-white border-2 border-black text-black hover:bg-black hover:text-white transition-colors">
+                  <Button type="submit" size="lg" variant="hero" className="gap-2">
                     <Sparkles className="w-5 h-5" />
                     Generate Whitepaper
                   </Button>
@@ -305,7 +306,7 @@ export default function Generate() {
                 <CardContent className="py-12">
                   <div className="text-center space-y-6">
                     <div className="flex justify-center">
-                      <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full hero-gradient flex items-center justify-center glow">
                         <Loader2 className="w-8 h-8 text-white animate-spin" />
                       </div>
                     </div>
@@ -327,45 +328,12 @@ export default function Generate() {
             )}
           </div>
         ) : (
-          <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="text-center space-y-6">
-              <div className="flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-white" />
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-2xl font-semibold mb-2">Whitepaper Generated Successfully!</h3>
-                <p className="text-muted-foreground">
-                  Your AI-powered whitepaper is ready for download.
-                </p>
-              </div>
-              
-              <div className="flex justify-center gap-4">
-                <Button asChild>
-                  <a href={generatedFile.pdf_url} download={generatedFile.filename} target="_blank" rel="noopener noreferrer">
-                    Download PDF
-                  </a>
-                </Button>
-                <Button variant="outline" onClick={() => {
-                  setGeneratedFile(null)
-                  setForm({
-                    title: "",
-                    industry: "",
-                    audience: "",
-                    problemStatement: "",
-                    solutionOutline: "",
-                    tone: "",
-                    length: ""
-                  })
-                  setSelectedTemplate(null)
-                }}>
-                  Generate Another
-                </Button>
-              </div>
-            </div>
-          </div>
+          <PdfEditor 
+            pdfUrl={generatedFile.pdf_url}
+            filename={generatedFile.filename}
+            initialContent={generatedFile.content}
+            title={form.title}
+          />
         )}
       </div>
 
