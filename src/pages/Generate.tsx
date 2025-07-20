@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -295,7 +294,7 @@ export default function Generate() {
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button type="submit" size="lg" variant="hero" className="gap-2">
+                  <Button type="submit" size="lg" className="gap-2 bg-black text-white hover:bg-neutral-800">
                     <Sparkles className="w-5 h-5" />
                     Generate Whitepaper
                   </Button>
