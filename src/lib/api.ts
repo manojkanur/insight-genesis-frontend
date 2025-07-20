@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000
 // Create axios instance with default config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 120000, // 2 minutes timeout for PDF generation
   headers: {
     'Content-Type': 'application/json',
   },
@@ -160,6 +160,7 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 120000, // 2 minutes for file upload
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -188,7 +189,9 @@ export const generateWhitepaper = async (data: {
   template?: string
 }): Promise<GenerateResponse> => {
   try {
-    const response = await apiClient.post<GenerateResponse>('/api/generate', data)
+    const response = await apiClient.post<GenerateResponse>('/api/generate', data, {
+      timeout: 120000, // 2 minutes for PDF generation
+    })
     return response.data
   } catch (error) {
     handleApiError(error as AxiosError)
@@ -203,7 +206,9 @@ export const saveWhitepaperContent = async (data: {
   content: PdfContent
 }): Promise<GenerateResponse> => {
   try {
-    const response = await apiClient.post<GenerateResponse>('/api/save-content', data)
+    const response = await apiClient.post<GenerateResponse>('/api/save-content', data, {
+      timeout: 120000, // 2 minutes for PDF regeneration
+    })
     return response.data
   } catch (error) {
     handleApiError(error as AxiosError)
@@ -247,6 +252,7 @@ export const downloadFile = async (filePath: string): Promise<Blob> => {
   try {
     const response = await apiClient.get(`/api/download/${encodeURIComponent(filePath)}`, {
       responseType: 'blob',
+      timeout: 120000, // 2 minutes for file download
     })
     return response.data
   } catch (error) {
@@ -261,6 +267,8 @@ export const convertPdfToWord = async (pdfPath: string): Promise<ConversionRespo
   try {
     const response = await apiClient.post<ConversionResponse>('/api/pdf-to-word', {
       pdf_path: pdfPath
+    }, {
+      timeout: 120000, // 2 minutes for PDF to Word conversion
     })
     return response.data
   } catch (error) {
@@ -277,7 +285,9 @@ export const convertWordToPdf = async (data: {
   formatting?: DocumentFormatting
 }): Promise<ExportResponse> => {
   try {
-    const response = await apiClient.post<ExportResponse>('/api/word-to-pdf', data)
+    const response = await apiClient.post<ExportResponse>('/api/word-to-pdf', data, {
+      timeout: 120000, // 2 minutes for Word to PDF conversion
+    })
     return response.data
   } catch (error) {
     handleApiError(error as AxiosError)
@@ -292,7 +302,9 @@ export const saveRichContent = async (data: {
   content: RichPdfContent
 }): Promise<GenerateResponse> => {
   try {
-    const response = await apiClient.post<GenerateResponse>('/api/save-rich-content', data)
+    const response = await apiClient.post<GenerateResponse>('/api/save-rich-content', data, {
+      timeout: 120000, // 2 minutes for rich content processing
+    })
     return response.data
   } catch (error) {
     handleApiError(error as AxiosError)
@@ -311,6 +323,8 @@ export const exportDocument = async (data: {
     const response = await apiClient.post<ExportResponse>(`/api/export/${data.format}`, {
       filename: data.filename,
       content: data.content
+    }, {
+      timeout: 120000, // 2 minutes for document export
     })
     return response.data
   } catch (error) {
