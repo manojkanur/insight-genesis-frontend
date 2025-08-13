@@ -311,7 +311,6 @@ export default function Generate() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">Generate AI Whitepaper</h1>
         <p className="text-xl text-muted-foreground">
@@ -319,7 +318,6 @@ export default function Generate() {
         </p>
       </div>
 
-      {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           {steps.map((step, index) => (
@@ -354,7 +352,6 @@ export default function Generate() {
         </div>
       </div>
 
-      {/* Step Content */}
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Card>
@@ -374,7 +371,6 @@ export default function Generate() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {/* Step 1: Basic Information */}
               {currentStep === 1 && (
                 <>
                   <div className="space-y-2">
@@ -434,7 +430,6 @@ export default function Generate() {
                 </>
               )}
 
-              {/* Step 2: Content Structure */}
               {currentStep === 2 && (
                 <>
                   <div className="space-y-4">
@@ -524,7 +519,6 @@ export default function Generate() {
                 </>
               )}
 
-              {/* Step 3: Template Selection */}
               {currentStep === 3 && (
                 <TemplateSelector 
                   selectedTemplate={form.template}
@@ -532,7 +526,6 @@ export default function Generate() {
                 />
               )}
 
-              {/* Step 4: Review & Generate */}
               {currentStep === 4 && (
                 <div className="space-y-6">
                   <div>
@@ -599,7 +592,6 @@ export default function Generate() {
                 </div>
               )}
 
-              {/* Navigation Buttons */}
               <div className="flex justify-between pt-6 border-t">
                 <Button
                   onClick={prevStep}
@@ -617,7 +609,7 @@ export default function Generate() {
                   <Button 
                     onClick={simulateGeneration}
                     size="lg" 
-                    className="gap-2 bg-black text-white hover:bg-neutral-800"
+                    className="gap-2 text-black bg-white hover:bg-gray-100 border border-gray-300"
                   >
                     <Sparkles className="w-5 h-5" />
                     Generate Whitepaper
@@ -628,9 +620,7 @@ export default function Generate() {
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Tips */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -660,7 +650,6 @@ export default function Generate() {
             </CardContent>
           </Card>
 
-          {/* Generation Stats */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
