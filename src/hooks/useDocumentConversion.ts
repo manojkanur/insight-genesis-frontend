@@ -99,14 +99,23 @@ export function useDocumentConversion() {
     }))
   }, [])
 
-  // Fix: Accept content as parameter instead of using stale state
   const saveChanges = useCallback(async (filename: string, content: string) => {
+    // Add content validation
+    if (!content || typeof content !== 'string') {
+      toast({
+        title: "Save failed",
+        description: "No content to save.",
+        variant: "destructive"
+      })
+      return
+    }
+
     setState(prev => ({ ...prev, isSaving: true }))
 
     try {
       const response = await pdfConverter.convertWordToPdf(
         content,
-        filename.replace('.pdf', '_edited.pdf'),
+        filename || 'document.pdf',
         {
           fontSize: 12,
           fontFamily: 'Times New Roman',
@@ -141,14 +150,23 @@ export function useDocumentConversion() {
     }
   }, [toast])
 
-  // Fix: Accept content as parameter
   const exportToPdf = useCallback(async (filename: string, content: string) => {
+    // Add content validation
+    if (!content || typeof content !== 'string') {
+      toast({
+        title: "Export failed",
+        description: "No content to export.",
+        variant: "destructive"
+      })
+      return
+    }
+
     setState(prev => ({ ...prev, isExporting: true }))
 
     try {
       const response = await pdfConverter.convertWordToPdf(
         content,
-        filename.replace('.pdf', '_edited.pdf'),
+        filename || 'document.pdf',
         {
           fontSize: 12,
           fontFamily: 'Times New Roman',
@@ -186,10 +204,19 @@ export function useDocumentConversion() {
     }
   }, [toast])
 
-  // Fix: Accept content as parameter
   const exportToWord = useCallback(async (filename: string, content: string) => {
+    // Add content validation
+    if (!content || typeof content !== 'string') {
+      toast({
+        title: "Word export failed",
+        description: "No content to export.",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
-      await pdfConverter.downloadAsWord(content, filename)
+      await pdfConverter.downloadAsWord(content, filename || 'document')
 
       toast({
         title: "Word document downloaded",
@@ -197,7 +224,7 @@ export function useDocumentConversion() {
       })
     } catch (error) {
       toast({
-        title: "Download failed",
+        title: "Word export failed",
         description: "Unable to download Word document.",
         variant: "destructive"
       })

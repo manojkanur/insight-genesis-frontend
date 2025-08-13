@@ -528,16 +528,18 @@ export default function Generate() {
                   className="h-full w-full"
                 />
               ) : (
-                <PagedWordEditor
-                  value={editedContent}
-                  onChange={updateContent}
-                  onSave={handleSaveWordChanges}
-                  onDownloadPdf={handleDownloadEditedPdf}
-                  onDownloadWord={handleDownloadWord}
-                  hasUnsavedChanges={hasUnsavedChanges}
-                  isSaving={isSaving}
-                  placeholder="Edit your whitepaper content here..."
-                />
+                <div className="h-full">
+                  <PagedWordEditor
+                    value={editedContent}
+                    onChange={updateContent}
+                    onSave={handleSaveWordChanges}
+                    onDownloadPdf={handleDownloadEditedPdf}
+                    onDownloadWord={handleDownloadWord}
+                    hasUnsavedChanges={hasUnsavedChanges}
+                    isSaving={isSaving}
+                    placeholder="Edit your whitepaper content here..."
+                  />
+                </div>
               )}
             </div>
           </div>

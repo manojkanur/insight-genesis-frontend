@@ -5,9 +5,6 @@ import 'react-quill/dist/quill.snow.css'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { 
   FileEdit, 
   Save, 
@@ -16,11 +13,7 @@ import {
   ChevronRight,
   BookOpen,
   Maximize2,
-  Minimize2,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Table
+  Minimize2
 } from 'lucide-react'
 
 interface PagedWordEditorProps {
@@ -105,54 +98,20 @@ export function PagedWordEditor({
   }
 
   const handleSave = () => {
-    if (onSave) {
+    if (onSave && editorValue) {
       onSave(editorValue)
     }
   }
 
   const handleDownloadPdf = () => {
-    if (onDownloadPdf) {
+    if (onDownloadPdf && editorValue) {
       onDownloadPdf(editorValue)
     }
   }
 
   const handleDownloadWord = () => {
-    if (onDownloadWord) {
+    if (onDownloadWord && editorValue) {
       onDownloadWord(editorValue)
-    }
-  }
-
-  const insertTable = () => {
-    const quill = editorRef.current?.getEditor()
-    if (quill) {
-      const range = quill.getSelection()
-      if (range) {
-        const tableHtml = `
-          <table style="width: 100%; border-collapse: collapse; margin: 1em 0;">
-            <tr>
-              <td style="border: 1px solid #ccc; padding: 8px;">Cell 1</td>
-              <td style="border: 1px solid #ccc; padding: 8px;">Cell 2</td>
-              <td style="border: 1px solid #ccc; padding: 8px;">Cell 3</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #ccc; padding: 8px;">Cell 4</td>
-              <td style="border: 1px solid #ccc; padding: 8px;">Cell 5</td>
-              <td style="border: 1px solid #ccc; padding: 8px;">Cell 6</td>
-            </tr>
-          </table>
-        `
-        quill.clipboard.dangerouslyPasteHTML(range.index, tableHtml)
-      }
-    }
-  }
-
-  const formatText = (format: string, value?: any) => {
-    const quill = editorRef.current?.getEditor()
-    if (quill) {
-      const range = quill.getSelection()
-      if (range) {
-        quill.format(format, value)
-      }
     }
   }
 
@@ -210,64 +169,6 @@ export function PagedWordEditor({
         </CardHeader>
       </Card>
 
-      {/* Additional Toolbar */}
-      <Card>
-        <CardContent className="py-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={insertTable}
-              className="gap-2"
-            >
-              <Table className="w-4 h-4" />
-              Table
-            </Button>
-            
-            <Separator orientation="vertical" className="h-6" />
-            
-            <div className="flex items-center gap-2">
-              <Label htmlFor="font-size" className="text-sm">Size:</Label>
-              <Input
-                id="font-size"
-                type="number"
-                min="8"
-                max="72"
-                defaultValue="12"
-                className="w-16 h-8"
-                onChange={(e) => formatText('size', `${e.target.value}px`)}
-              />
-            </div>
-            
-            <Separator orientation="vertical" className="h-6" />
-            
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => formatText('align', 'left')}
-              >
-                <AlignLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => formatText('align', 'center')}
-              >
-                <AlignCenter className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => formatText('align', 'right')}
-              >
-                <AlignRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Page Navigation */}
       {viewMode === 'pages' && pageCount > 1 && (
         <Card>
@@ -304,7 +205,10 @@ export function PagedWordEditor({
         <CardContent className="p-0">
           <div 
             className={`word-editor-wrapper ${viewMode === 'pages' ? 'page-view' : 'continuous-view'}`}
-            style={{ minHeight: isFullscreen ? 'calc(100vh - 400px)' : '600px' }}
+            style={{ 
+              height: isFullscreen ? 'calc(100vh - 300px)' : '600px',
+              overflow: 'auto'
+            }}
           >
             <ReactQuill
               ref={editorRef}
@@ -315,7 +219,7 @@ export function PagedWordEditor({
               formats={formats}
               placeholder={placeholder}
               style={{ 
-                height: isFullscreen ? 'calc(100vh - 450px)' : '550px',
+                height: '100%',
                 fontSize: '14px',
                 lineHeight: '1.6'
               }}
@@ -366,7 +270,7 @@ export function PagedWordEditor({
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .page-view .ql-editor {
           background: white;
           box-shadow: 0 0 0 1px #ccc;
@@ -382,6 +286,15 @@ export function PagedWordEditor({
           max-width: 210mm;
           margin: 0 auto;
           padding: 20mm;
+        }
+        
+        .word-editor-wrapper .ql-container {
+          height: calc(100% - 42px) !important;
+        }
+        
+        .word-editor-wrapper .ql-editor {
+          height: 100% !important;
+          overflow-y: auto;
         }
         
         @media print {

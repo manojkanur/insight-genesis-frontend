@@ -73,6 +73,218 @@ export class PdfToWordConverter {
     }
   }
 
+  async convertWordToPdf(
+    wordContent: string,
+    filename: string,
+    formatting: Partial<DocumentFormatting> = {}
+  ): Promise<{ download_url: string; filename: string }> {
+    try {
+      console.log('🔄 Starting enhanced Word to PDF conversion...')
+      
+      // Add content validation
+      if (!wordContent || typeof wordContent !== 'string') {
+        throw new Error('Invalid content provided for PDF conversion')
+      }
+      
+      const defaultFormatting: DocumentFormatting = {
+        fontSize: 12,
+        fontFamily: 'Times New Roman',
+        lineSpacing: 1.6,
+        margins: { top: 20, bottom: 20, left: 20, right: 20 }
+      }
+      
+      const finalFormatting = { ...defaultFormatting, ...formatting }
+      
+      // Create PDF with better formatting
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+
+      // Enhanced HTML to text conversion
+      const { text, structure } = this.htmlToStructuredText(wordContent)
+      
+      let yPosition = finalFormatting.margins.top
+      const lineHeight = finalFormatting.fontSize * finalFormatting.lineSpacing * 0.35
+      const pageHeight = 297 // A4 height in mm
+      const maxWidth = 210 - finalFormatting.margins.left - finalFormatting.margins.right
+      
+      structure.forEach((element) => {
+        // Check if we need a new page
+        if (yPosition > pageHeight - finalFormatting.margins.bottom - 20) {
+          pdf.addPage()
+          yPosition = finalFormatting.margins.top
+        }
+        
+        // Set font based on element type
+        if (element.type === 'heading') {
+          pdf.setFontSize(finalFormatting.fontSize + 4)
+          pdf.setFont('helvetica', 'bold')
+          yPosition += 10 // Extra space before heading
+        } else {
+          pdf.setFontSize(finalFormatting.fontSize)
+          pdf.setFont('helvetica', 'normal')
+        }
+        
+        // Split text to fit page width
+        const lines = pdf.splitTextToSize(element.text, maxWidth)
+        
+        lines.forEach((line: string) => {
+          if (yPosition > pageHeight - finalFormatting.margins.bottom) {
+            pdf.addPage()
+            yPosition = finalFormatting.margins.top
+          }
+          
+          pdf.text(line, finalFormatting.margins.left, yPosition)
+          yPosition += lineHeight
+        })
+        
+        // Add space after element
+        yPosition += element.type === 'heading' ? 5 : 2
+      })
+
+      // Generate blob and create download URL
+      const pdfBlob = pdf.output('blob')
+      const downloadUrl = URL.createObjectURL(pdfBlob)
+      
+      console.log('✅ Enhanced Word to PDF conversion completed')
+      
+      return {
+        download_url: downloadUrl,
+        filename: filename && typeof filename === 'string' ? filename.replace('.pdf', '_edited.pdf') : 'document_edited.pdf'
+      }
+    } catch (error) {
+      console.error('❌ Word to PDF conversion failed:', error)
+      throw new Error(`PDF export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  private htmlToStructuredText(html: string): { text: string; structure: Array<{type: string; text: string}> } {
+    const div = document.createElement('div')
+    div.innerHTML = html
+    
+    let text = ''
+    const structure: Array<{type: string; text: string}> = []
+    
+    const processNode = (node: Node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const textContent = node.textContent || ''
+        text += textContent
+        return textContent
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as Element
+        
+        switch (element.tagName?.toLowerCase()) {
+          case 'h1':
+          case 'h2':
+          case 'h3':
+          case 'h4':
+          case 'h5':
+          case 'h6':
+            const headingText = element.textContent || ''
+            structure.push({ type: 'heading', text: headingText })
+            text += '\n\n' + headingText + '\n'
+            return headingText
+          case 'p':
+            const pText = element.textContent || ''
+            structure.push({ type: 'paragraph', text: pText })
+            text += '\n' + pText + '\n'
+            return pText
+          case 'br':
+            text += '\n'
+            return '\n'
+          case 'li':
+            const liText = '• ' + (element.textContent || '')
+            structure.push({ type: 'list-item', text: liText })
+            text += '\n' + liText
+            return liText
+          case 'ul':
+          case 'ol':
+            text += '\n'
+            element.childNodes.forEach(processNode)
+            text += '\n'
+            return ''
+          default:
+            let childText = ''
+            element.childNodes.forEach(child => {
+              childText += processNode(child)
+            })
+            return childText
+        }
+      }
+      return ''
+    }
+    
+    div.childNodes.forEach(processNode)
+    
+    return { text: text.replace(/\n{3,}/g, '\n\n').trim(), structure }
+  }
+
+  // Extract text content for preview/editing
+  extractTextContent(wordContent: string): string {
+    return wordContent
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+  }
+
+  // Convert plain text back to rich HTML content
+  convertTextToRichContent(text: string): string {
+    return text
+      .split('\n\n')
+      .map(paragraph => paragraph.trim())
+      .filter(paragraph => paragraph.length > 0)
+      .map(paragraph => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
+      .join('')
+  }
+
+  // Download Word document as .docx (simplified version)
+  async downloadAsWord(content: string, filename: string): Promise<void> {
+    try {
+      // Add content validation
+      if (!content || typeof content !== 'string') {
+        throw new Error('Invalid content provided for Word download')
+      }
+      
+      // Add filename validation
+      const safeFilename = filename && typeof filename === 'string' ? filename : 'document'
+      
+      // For now, download as HTML file that can be opened in Word
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${safeFilename}</title>
+          <style>
+            body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; margin: 1in; }
+            h1, h2, h3 { font-weight: bold; margin: 1em 0 0.5em 0; }
+            p { margin: 0 0 1em 0; }
+            ul, ol { margin: 1em 0; padding-left: 2em; }
+          </style>
+        </head>
+        <body>
+          ${content}
+        </body>
+        </html>
+      `
+      
+      const blob = new Blob([htmlContent], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${safeFilename.replace('.pdf', '')}.html`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      throw new Error(`Word download failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
   private convertToRichHtml(parsedContent: ParsedPdfContent): string {
     let html = ''
     
@@ -190,205 +402,6 @@ export class PdfToWordConverter {
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/__(.*?)__/g, '<strong>$1</strong>')
       .replace(/_(.*?)_/g, '<em>$1</em>')
-  }
-
-  async convertWordToPdf(
-    wordContent: string,
-    filename: string,
-    formatting: Partial<DocumentFormatting> = {}
-  ): Promise<{ download_url: string; filename: string }> {
-    try {
-      console.log('🔄 Starting enhanced Word to PDF conversion...')
-      
-      const defaultFormatting: DocumentFormatting = {
-        fontSize: 12,
-        fontFamily: 'Times New Roman',
-        lineSpacing: 1.6,
-        margins: { top: 20, bottom: 20, left: 20, right: 20 }
-      }
-      
-      const finalFormatting = { ...defaultFormatting, ...formatting }
-      
-      // Create PDF with better formatting
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      })
-
-      // Enhanced HTML to text conversion
-      const { text, structure } = this.htmlToStructuredText(wordContent)
-      
-      let yPosition = finalFormatting.margins.top
-      const lineHeight = finalFormatting.fontSize * finalFormatting.lineSpacing * 0.35
-      const pageHeight = 297 // A4 height in mm
-      const maxWidth = 210 - finalFormatting.margins.left - finalFormatting.margins.right
-      
-      structure.forEach((element) => {
-        // Check if we need a new page
-        if (yPosition > pageHeight - finalFormatting.margins.bottom - 20) {
-          pdf.addPage()
-          yPosition = finalFormatting.margins.top
-        }
-        
-        // Set font based on element type
-        if (element.type === 'heading') {
-          pdf.setFontSize(finalFormatting.fontSize + 4)
-          pdf.setFont('helvetica', 'bold')
-          yPosition += 10 // Extra space before heading
-        } else {
-          pdf.setFontSize(finalFormatting.fontSize)
-          pdf.setFont('helvetica', 'normal')
-        }
-        
-        // Split text to fit page width
-        const lines = pdf.splitTextToSize(element.text, maxWidth)
-        
-        lines.forEach((line: string) => {
-          if (yPosition > pageHeight - finalFormatting.margins.bottom) {
-            pdf.addPage()
-            yPosition = finalFormatting.margins.top
-          }
-          
-          pdf.text(line, finalFormatting.margins.left, yPosition)
-          yPosition += lineHeight
-        })
-        
-        // Add space after element
-        yPosition += element.type === 'heading' ? 5 : 2
-      })
-
-      // Generate blob and create download URL
-      const pdfBlob = pdf.output('blob')
-      const downloadUrl = URL.createObjectURL(pdfBlob)
-      
-      console.log('✅ Enhanced Word to PDF conversion completed')
-      
-      return {
-        download_url: downloadUrl,
-        filename: filename.replace('.pdf', '_edited.pdf')
-      }
-    } catch (error) {
-      console.error('❌ Word to PDF conversion failed:', error)
-      throw new Error(`PDF export failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
-
-  private htmlToStructuredText(html: string): { text: string; structure: Array<{type: string; text: string}> } {
-    const div = document.createElement('div')
-    div.innerHTML = html
-    
-    let text = ''
-    const structure: Array<{type: string; text: string}> = []
-    
-    const processNode = (node: Node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const textContent = node.textContent || ''
-        text += textContent
-        return textContent
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as Element
-        
-        switch (element.tagName?.toLowerCase()) {
-          case 'h1':
-          case 'h2':
-          case 'h3':
-          case 'h4':
-          case 'h5':
-          case 'h6':
-            const headingText = element.textContent || ''
-            structure.push({ type: 'heading', text: headingText })
-            text += '\n\n' + headingText + '\n'
-            return headingText
-          case 'p':
-            const pText = element.textContent || ''
-            structure.push({ type: 'paragraph', text: pText })
-            text += '\n' + pText + '\n'
-            return pText
-          case 'br':
-            text += '\n'
-            return '\n'
-          case 'li':
-            const liText = '• ' + (element.textContent || '')
-            structure.push({ type: 'list-item', text: liText })
-            text += '\n' + liText
-            return liText
-          case 'ul':
-          case 'ol':
-            text += '\n'
-            element.childNodes.forEach(processNode)
-            text += '\n'
-            return ''
-          default:
-            let childText = ''
-            element.childNodes.forEach(child => {
-              childText += processNode(child)
-            })
-            return childText
-        }
-      }
-      return ''
-    }
-    
-    div.childNodes.forEach(processNode)
-    
-    return { text: text.replace(/\n{3,}/g, '\n\n').trim(), structure }
-  }
-
-  // Extract text content for preview/editing
-  extractTextContent(wordContent: string): string {
-    return wordContent
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n\n')
-      .replace(/<[^>]*>/g, '')
-      .trim()
-  }
-
-  // Convert plain text back to rich HTML content
-  convertTextToRichContent(text: string): string {
-    return text
-      .split('\n\n')
-      .map(paragraph => paragraph.trim())
-      .filter(paragraph => paragraph.length > 0)
-      .map(paragraph => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
-      .join('')
-  }
-
-  // Download Word document as .docx (simplified version)
-  async downloadAsWord(content: string, filename: string): Promise<void> {
-    try {
-      // For now, download as HTML file that can be opened in Word
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>${filename}</title>
-          <style>
-            body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; margin: 1in; }
-            h1, h2, h3 { font-weight: bold; margin: 1em 0 0.5em 0; }
-            p { margin: 0 0 1em 0; }
-            ul, ol { margin: 1em 0; padding-left: 2em; }
-          </style>
-        </head>
-        <body>
-          ${content}
-        </body>
-        </html>
-      `
-      
-      const blob = new Blob([htmlContent], { type: 'text/html' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${filename.replace('.pdf', '')}.html`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    } catch (error) {
-      throw new Error(`Word download failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
   }
 }
 
