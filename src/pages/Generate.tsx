@@ -20,15 +20,13 @@ import {
   generateWhitepaper, 
   ApiError, 
   GenerateResponse, 
-  downloadFile,
-  convertPdfToWord,
-  convertWordToPdf
+  downloadFile
 } from "@/lib/api"
 import { TemplateSelector } from "@/components/TemplateSelector"
 import { PdfViewer } from "@/components/PdfViewer"
 import { WordEditor } from "@/components/WordEditor"
 import { ConversionToolbar } from "@/components/ConversionToolbar"
-import { ViewToggle } from "@/components/ViewToggle"
+import { useDocumentConversion } from "@/hooks/useDocumentConversion"
 
 interface GenerationForm {
   title: string
@@ -74,15 +72,24 @@ export default function Generate() {
   const [progress, setProgress] = useState(0)
   const [generatedFile, setGeneratedFile] = useState<GenerateResponse | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [isConverted, setIsConverted] = useState(false)
-  const [isConverting, setIsConverting] = useState(false)
   const [viewMode, setViewMode] = useState<'pdf' | 'word'>('pdf')
-  const [wordContent, setWordContent] = useState<string>('')
-  const [editedWordContent, setEditedWordContent] = useState<string>('')
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
   const { toast } = useToast()
+
+  // Use the conversion hook
+  const {
+    isConverting,
+    isConverted,
+    isExporting,
+    isSaving,
+    hasUnsavedChanges,
+    editedContent,
+    convertPdfToWord,
+    updateContent,
+    saveChanges,
+    exportToPdf,
+    exportToWord,
+    resetConversion
+  } = useDocumentConversion()
 
   const updateForm = (field: keyof GenerationForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -195,148 +202,41 @@ export default function Generate() {
   const handleConvertToWord = async () => {
     if (!generatedFile) return
     
-    setIsConverting(true)
     try {
-      const response = await convertPdfToWord(generatedFile.pdf_url)
-      
-      setWordContent(response.word_content)
-      setEditedWordContent(response.word_content)
-      setIsConverted(true)
+      await convertPdfToWord(generatedFile.pdf_url)
       setViewMode('word')
-      
-      toast({
-        title: "Conversion successful",
-        description: "PDF has been converted to editable Word format.",
-      })
     } catch (error) {
-      toast({
-        title: "Conversion failed",
-        description: "Unable to convert PDF to Word format.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsConverting(false)
+      console.error('Conversion failed:', error)
     }
-  }
-
-  const handleWordContentChange = (content: string) => {
-    setEditedWordContent(content)
-    setHasUnsavedChanges(true)
   }
 
   const handleSaveWordChanges = async () => {
     if (!generatedFile) return
     
-    setIsSaving(true)
     try {
-      const response = await convertWordToPdf({
-        word_content: editedWordContent,
-        filename: generatedFile.filename.replace('.pdf', '_edited.pdf'),
-        formatting: {
-          fontSize: 12,
-          fontFamily: 'Times New Roman',
-          lineSpacing: 1.6,
-          margins: {
-            top: 1,
-            bottom: 1,
-            left: 1,
-            right: 1
-          }
-        }
-      })
-      
-      // Update the PDF URL with the new edited version
-      setGeneratedFile(prev => prev ? { ...prev, pdf_url: response.download_url } : null)
-      setHasUnsavedChanges(false)
-      
-      toast({
-        title: "Changes saved",
-        description: "Your edits have been saved and PDF updated.",
-      })
+      await saveChanges(generatedFile.filename)
     } catch (error) {
-      toast({
-        title: "Save failed",
-        description: "Unable to save changes. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsSaving(false)
+      console.error('Save failed:', error)
     }
   }
 
   const handleDownloadEditedPdf = async () => {
     if (!generatedFile) return
     
-    setIsExporting(true)
     try {
-      let downloadUrl = generatedFile.pdf_url
-      
-      // If there are unsaved changes, generate new PDF first
-      if (hasUnsavedChanges) {
-        const response = await convertWordToPdf({
-          word_content: editedWordContent,
-          filename: generatedFile.filename.replace('.pdf', '_edited.pdf'),
-          formatting: {
-            fontSize: 12,
-            fontFamily: 'Times New Roman',
-            lineSpacing: 1.6,
-            margins: { top: 1, bottom: 1, left: 1, right: 1 }
-          }
-        })
-        downloadUrl = response.download_url
-      }
-      
-      const blob = await downloadFile(downloadUrl)
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = generatedFile.filename.replace('.pdf', '_edited.pdf')
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      
-      toast({
-        title: "Download successful",
-        description: "Your edited PDF has been downloaded.",
-      })
+      await exportToPdf(generatedFile.filename)
     } catch (error) {
-      toast({
-        title: "Download failed",
-        description: "Unable to download the file. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsExporting(false)
+      console.error('PDF export failed:', error)
     }
   }
 
   const handleDownloadWord = async () => {
-    if (!editedWordContent) return
+    if (!generatedFile) return
     
     try {
-      const blob = new Blob([editedWordContent], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${generatedFile?.filename.replace('.pdf', '') || 'document'}_edited.docx`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      
-      toast({
-        title: "Word document downloaded",
-        description: "Edited content has been downloaded as Word document.",
-      })
+      await exportToWord(generatedFile.filename)
     } catch (error) {
-      toast({
-        title: "Download failed",
-        description: "Unable to download Word document.",
-        variant: "destructive"
-      })
+      console.error('Word export failed:', error)
     }
   }
 
@@ -365,12 +265,8 @@ export default function Generate() {
     setSelectedTemplate(null)
     setGeneratedFile(null)
     setProgress(0)
-    // Reset word editing states
-    setIsConverted(false)
     setViewMode('pdf')
-    setWordContent('')
-    setEditedWordContent('')
-    setHasUnsavedChanges(false)
+    resetConversion()
   }
 
   return (
@@ -633,8 +529,8 @@ export default function Generate() {
                 />
               ) : (
                 <WordEditor
-                  value={editedWordContent}
-                  onChange={handleWordContentChange}
+                  value={editedContent}
+                  onChange={updateContent}
                   onSave={handleSaveWordChanges}
                   onDownloadPdf={handleDownloadEditedPdf}
                   onDownloadWord={handleDownloadWord}
