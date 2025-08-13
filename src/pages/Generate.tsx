@@ -84,6 +84,10 @@ export default function Generate() {
   const [isExporting, setIsExporting] = useState(false)
   const { toast } = useToast()
 
+  const updateForm = (field: keyof GenerationForm, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
