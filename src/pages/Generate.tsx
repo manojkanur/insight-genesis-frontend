@@ -124,7 +124,6 @@ export default function Generate() {
     setIsGenerating(true)
     setGenerationProgress(0)
 
-    // Simulate progress updates
     const progressInterval = setInterval(() => {
       setGenerationProgress(prev => {
         if (prev >= 90) {
@@ -135,13 +134,11 @@ export default function Generate() {
       })
     }, 500)
 
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 5000))
     
     clearInterval(progressInterval)
     setGenerationProgress(100)
 
-    // Simulate result
     const result: GenerationResult = {
       id: Date.now().toString(),
       title: form.title || "Generated Whitepaper",
