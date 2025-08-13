@@ -124,9 +124,9 @@ export function PagedWordEditor({
   }
 
   return (
-    <div className={`space-y-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-background p-4' : ''}`}>
+    <div className={`h-full flex flex-col space-y-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-background p-4' : ''}`}>
       {/* Header */}
-      <Card>
+      <Card className="shrink-0">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -171,7 +171,7 @@ export function PagedWordEditor({
 
       {/* Page Navigation */}
       {viewMode === 'pages' && pageCount > 1 && (
-        <Card>
+        <Card className="shrink-0">
           <CardContent className="py-2">
             <div className="flex items-center justify-center gap-4">
               <Button
@@ -200,15 +200,11 @@ export function PagedWordEditor({
         </Card>
       )}
 
-      {/* Editor */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
+      {/* Editor - Takes remaining height */}
+      <Card className="flex-1 overflow-hidden">
+        <CardContent className="p-0 h-full">
           <div 
-            className={`word-editor-wrapper ${viewMode === 'pages' ? 'page-view' : 'continuous-view'}`}
-            style={{ 
-              height: isFullscreen ? 'calc(100vh - 300px)' : '600px',
-              overflow: 'auto'
-            }}
+            className={`word-editor-wrapper h-full ${viewMode === 'pages' ? 'page-view' : 'continuous-view'}`}
           >
             <ReactQuill
               ref={editorRef}
@@ -218,18 +214,14 @@ export function PagedWordEditor({
               modules={modules}
               formats={formats}
               placeholder={placeholder}
-              style={{ 
-                height: '100%',
-                fontSize: '14px',
-                lineHeight: '1.6'
-              }}
+              style={{ height: '100%' }}
             />
           </div>
         </CardContent>
       </Card>
 
       {/* Footer */}
-      <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+      <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg shrink-0">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span>Auto-save enabled</span>
           <span>•</span>
@@ -276,7 +268,7 @@ export function PagedWordEditor({
           box-shadow: 0 0 0 1px #ccc;
           margin: 0 auto;
           max-width: 210mm;
-          min-height: 297mm;
+          min-height: calc(100vh - 200px);
           padding: 20mm;
           page-break-after: always;
         }
@@ -286,10 +278,12 @@ export function PagedWordEditor({
           max-width: 210mm;
           margin: 0 auto;
           padding: 20mm;
+          min-height: calc(100vh - 200px);
         }
         
         .word-editor-wrapper .ql-container {
           height: calc(100% - 42px) !important;
+          overflow-y: auto;
         }
         
         .word-editor-wrapper .ql-editor {

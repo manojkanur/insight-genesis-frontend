@@ -61,8 +61,8 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
   }
 
   return (
-    <Card className={className}>
-      <div className="flex items-center justify-between p-3 border-b">
+    <Card className={`${className} flex flex-col h-full`}>
+      <div className="flex items-center justify-between p-3 border-b shrink-0">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -91,7 +91,7 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
         </div>
       </div>
       
-      <CardContent className="p-0 relative">
+      <CardContent className="p-0 relative flex-1 overflow-hidden">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
             <div className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
         
         <iframe
           src={`${pdfUrl}#zoom=${zoom}`}
-          className="w-full h-[800px] border-0"
+          className="w-full h-full border-0"
           onLoad={handleLoad}
           onError={handleError}
           title="PDF Preview"

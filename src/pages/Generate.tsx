@@ -1,17 +1,15 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
 import { 
   FileText, 
   Loader2, 
   Sparkles,
-  Lightbulb,
-  Zap,
   Download,
   Save
 } from "lucide-react"
@@ -32,10 +30,6 @@ interface GenerationForm {
   title: string
   industry: string
   audience: string
-  problemStatement: string
-  solutionOutline: string
-  tone: string
-  length: string
 }
 
 const industries = [
@@ -48,23 +42,11 @@ const audiences = [
   "Investors", "Government Officials", "Academic Researchers", "General Public"
 ]
 
-const tones = [
-  "Professional", "Technical", "Conversational", "Academic", "Persuasive"
-]
-
-const lengths = [
-  "Short (5-10 pages)", "Medium (10-20 pages)", "Long (20-30 pages)", "Extended (30+ pages)"
-]
-
 export default function Generate() {
   const [form, setForm] = useState<GenerationForm>({
     title: "",
     industry: "",
-    audience: "",
-    problemStatement: "",
-    solutionOutline: "",
-    tone: "",
-    length: ""
+    audience: ""
   })
   
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
@@ -99,7 +81,7 @@ export default function Generate() {
     e.preventDefault()
     
     // Validate form
-    const requiredFields = ['title', 'industry', 'audience', 'problemStatement', 'solutionOutline']
+    const requiredFields = ['title', 'industry', 'audience']
     const missingFields = requiredFields.filter(field => !form[field as keyof GenerationForm])
     
     if (missingFields.length > 0) {
@@ -135,15 +117,15 @@ export default function Generate() {
         })
       }, 500)
 
-      // Call real API
+      // Call real API with simplified payload
       const response = await generateWhitepaper({
         title: form.title,
         industry: form.industry,
         audience: form.audience,
-        problem_statement: form.problemStatement,
-        solution_outline: form.solutionOutline,
-        tone: form.tone,
-        length: form.length,
+        problem_statement: "Auto-generated based on industry and audience",
+        solution_outline: "AI-powered whitepaper solution",
+        tone: "Professional",
+        length: "Medium (10-20 pages)",
         template: selectedTemplate
       })
 
@@ -256,11 +238,7 @@ export default function Generate() {
     setForm({
       title: "",
       industry: "",
-      audience: "",
-      problemStatement: "",
-      solutionOutline: "",
-      tone: "",
-      length: ""
+      audience: ""
     })
     setSelectedTemplate(null)
     setGeneratedFile(null)
@@ -272,195 +250,116 @@ export default function Generate() {
   return (
     <div className="flex h-screen">
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-hidden">
         {!generatedFile ? (
-          <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-4">
-                Generate AI Whitepaper
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                Create comprehensive, professional whitepapers powered by advanced AI technology.
-              </p>
-            </div>
+          <div className="h-full overflow-auto">
+            <div className="container mx-auto px-4 py-8 max-w-4xl">
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold mb-4">
+                  Generate AI Whitepaper
+                </h1>
+                <p className="text-xl text-muted-foreground">
+                  Create comprehensive, professional whitepapers powered by advanced AI technology.
+                </p>
+              </div>
 
-            {!isGenerating ? (
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Basic Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
-                      Basic Information
-                    </CardTitle>
-                    <CardDescription>
-                      Define the core details of your whitepaper
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Whitepaper Title</Label>
-                      <Input
-                        id="title"
-                        placeholder="e.g., The Future of AI in Healthcare"
-                        value={form.title}
-                        onChange={(e) => updateForm('title', e.target.value)}
-                        className="text-base"
-                      />
-                    </div>
-                    
-                    <div className="grid md:grid-cols-2 gap-6">
+              {!isGenerating ? (
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Basic Information - Only Required Section */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        Basic Information
+                      </CardTitle>
+                      <CardDescription>
+                        Define the core details of your whitepaper
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
                       <div className="space-y-2">
-                        <Label htmlFor="industry">Industry</Label>
-                        <Select value={form.industry} onValueChange={(value) => updateForm('industry', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your industry" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {industries.map(industry => (
-                              <SelectItem key={industry} value={industry}>{industry}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="title">Whitepaper Title</Label>
+                        <Input
+                          id="title"
+                          placeholder="e.g., The Future of AI in Healthcare"
+                          value={form.title}
+                          onChange={(e) => updateForm('title', e.target.value)}
+                          className="text-base"
+                          required
+                        />
                       </div>
                       
-                      <div className="space-y-2">
-                        <Label htmlFor="audience">Target Audience</Label>
-                        <Select value={form.audience} onValueChange={(value) => updateForm('audience', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your audience" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {audiences.map(audience => (
-                              <SelectItem key={audience} value={audience}>{audience}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="industry">Industry</Label>
+                          <Select value={form.industry} onValueChange={(value) => updateForm('industry', value)} required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select your industry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {industries.map(industry => (
+                                <SelectItem key={industry} value={industry}>{industry}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="audience">Target Audience</Label>
+                          <Select value={form.audience} onValueChange={(value) => updateForm('audience', value)} required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select your audience" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {audiences.map(audience => (
+                                <SelectItem key={audience} value={audience}>{audience}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                {/* Content Details */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5" />
-                      Content Details
-                    </CardTitle>
-                    <CardDescription>
-                      Describe the problem and solution your whitepaper will address
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="problem">Problem Statement</Label>
-                      <Textarea
-                        id="problem"
-                        placeholder="Describe the key problem or challenge your whitepaper will address..."
-                        value={form.problemStatement}
-                        onChange={(e) => updateForm('problemStatement', e.target.value)}
-                        rows={4}
-                        className="resize-none"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="solution">Solution Outline</Label>
-                      <Textarea
-                        id="solution"
-                        placeholder="Outline your proposed solution or approach..."
-                        value={form.solutionOutline}
-                        onChange={(e) => updateForm('solutionOutline', e.target.value)}
-                        rows={4}
-                        className="resize-none"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Style & Format */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Zap className="w-5 h-5" />
-                      Style & Format
-                    </CardTitle>
-                    <CardDescription>
-                      Customize the tone and length of your whitepaper
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="tone">Writing Tone</Label>
-                        <Select value={form.tone} onValueChange={(value) => updateForm('tone', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select writing tone" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {tones.map(tone => (
-                              <SelectItem key={tone} value={tone}>{tone}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="length">Document Length</Label>
-                        <Select value={form.length} onValueChange={(value) => updateForm('length', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select document length" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {lengths.map(length => (
-                              <SelectItem key={length} value={length}>{length}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button type="submit" size="lg" variant="hero" className="gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    Generate Whitepaper
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center space-y-6">
-                    <div className="flex justify-center">
-                      <div className="w-16 h-16 rounded-full hero-gradient flex items-center justify-center glow">
-                        <Loader2 className="w-8 h-8 text-white animate-spin" />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-2xl font-semibold mb-2">Generating Your Whitepaper</h3>
-                      <p className="text-muted-foreground">
-                        Our AI is crafting your professional whitepaper. This may take a few minutes.
-                      </p>
-                    </div>
-                    
-                    <div className="max-w-md mx-auto">
-                      <Progress value={progress} className="mb-2" />
-                      <p className="text-sm text-muted-foreground">{Math.round(progress)}% complete</p>
-                    </div>
+                  <div className="flex justify-end">
+                    <Button type="submit" size="lg" className="gap-2 bg-black hover:bg-black/90 text-white">
+                      <Sparkles className="w-5 h-5" />
+                      Generate Whitepaper
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </form>
+              ) : (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center space-y-6">
+                      <div className="flex justify-center">
+                        <div className="w-16 h-16 rounded-full hero-gradient flex items-center justify-center glow">
+                          <Loader2 className="w-8 h-8 text-white animate-spin" />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-2xl font-semibold mb-2">Generating Your Whitepaper</h3>
+                        <p className="text-muted-foreground">
+                          Our AI is crafting your professional whitepaper. This may take a few minutes.
+                        </p>
+                      </div>
+                      
+                      <div className="max-w-md mx-auto">
+                        <Progress value={progress} className="mb-2" />
+                        <p className="text-sm text-muted-foreground">{Math.round(progress)}% complete</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         ) : (
-          // Generated PDF View with Word Conversion
+          // Generated PDF/Word View with improved layout
           <div className="h-full flex flex-col">
             {/* Header with actions */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-primary" />
                 <div>
@@ -503,7 +402,7 @@ export default function Generate() {
             </div>
 
             {/* Conversion Toolbar */}
-            <div className="p-4">
+            <div className="p-4 shrink-0">
               <ConversionToolbar
                 isConverted={isConverted}
                 isConverting={isConverting}
@@ -520,12 +419,12 @@ export default function Generate() {
               />
             </div>
 
-            {/* Content Area */}
+            {/* Content Area - Improved Layout */}
             <div className="flex-1 overflow-hidden px-4 pb-4">
               {viewMode === 'pdf' ? (
                 <PdfViewer 
                   pdfUrl={generatedFile.pdf_url}
-                  className="h-full w-full"
+                  className="h-full"
                 />
               ) : (
                 <div className="h-full">
