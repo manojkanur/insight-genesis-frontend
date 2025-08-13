@@ -18,14 +18,14 @@ const templates: PdfTemplate[] = [
     id: "business-executive",
     name: "Executive Summary",
     description: "Professional template for C-suite and business stakeholders",
-    preview: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=200&h=250&fit=crop&crop=center",
+    preview: "/api/placeholder/200/250",
     type: "business"
   },
   {
     id: "technical-detailed",
     name: "Technical Deep Dive",
     description: "Comprehensive template with technical specifications and diagrams",
-    preview: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=200&h=250&fit=crop&crop=center",
+    preview: "/api/placeholder/200/250", 
     type: "technical"
   }
 ]
@@ -82,20 +82,8 @@ export function TemplateSelector({ selectedTemplate, onTemplateSelect }: Templat
             </CardHeader>
             
             <CardContent className="pt-0">
-              <div className="w-full h-32 bg-muted rounded-md overflow-hidden">
-                <img 
-                  src={template.preview} 
-                  alt={`${template.name} template preview`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback to icon if image fails to load
-                    e.currentTarget.style.display = 'none'
-                    e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                  }}
-                />
-                <div className="hidden w-full h-full flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-muted-foreground" />
-                </div>
+              <div className="w-full h-32 bg-muted rounded-md flex items-center justify-center">
+                <FileText className="w-8 h-8 text-muted-foreground" />
               </div>
               
               <Button 

@@ -1,7 +1,8 @@
 
 import { 
   Upload, 
-  FileText
+  FileText, 
+  Home
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -18,6 +19,11 @@ import {
 } from "@/components/ui/sidebar"
 
 const navigation = [
+  { 
+    title: "Dashboard", 
+    url: "/", 
+    icon: Home,
+  },
   { 
     title: "Upload", 
     url: "/upload", 
