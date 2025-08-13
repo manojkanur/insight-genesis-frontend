@@ -170,7 +170,7 @@ export default function Generate() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="title">Whitepaper Title *</Label>
+                      <Label htmlFor="title">Whitepaper Title</Label>
                       <Input
                         id="title"
                         placeholder="e.g., The Future of AI in Healthcare"
@@ -182,7 +182,7 @@ export default function Generate() {
                     
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="industry">Industry *</Label>
+                        <Label htmlFor="industry">Industry</Label>
                         <Select value={form.industry} onValueChange={(value) => updateForm('industry', value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your industry" />
@@ -196,7 +196,7 @@ export default function Generate() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="audience">Target Audience *</Label>
+                        <Label htmlFor="audience">Target Audience</Label>
                         <Select value={form.audience} onValueChange={(value) => updateForm('audience', value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your audience" />
@@ -225,7 +225,7 @@ export default function Generate() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="problem">Problem Statement *</Label>
+                      <Label htmlFor="problem">Problem Statement</Label>
                       <Textarea
                         id="problem"
                         placeholder="Describe the key problem or challenge your whitepaper will address..."
@@ -237,7 +237,7 @@ export default function Generate() {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="solution">Solution Outline *</Label>
+                      <Label htmlFor="solution">Solution Outline</Label>
                       <Textarea
                         id="solution"
                         placeholder="Outline your proposed solution or approach..."

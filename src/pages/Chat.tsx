@@ -1,25 +1,16 @@
+
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { 
   Send, 
-  Upload, 
-  FileText, 
   Bot, 
   User,
   Sparkles,
-  MessageCircle,
-  Brain,
-  Zap,
-  Clock,
-  AlertCircle
+  Plus
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useDocumentChat } from "@/hooks/useApi"
-import { chatWithWhitepaper, ApiError } from "@/lib/api"
 
 interface Message {
   id: string
@@ -33,14 +24,7 @@ const sampleQuestions = [
   "What are the key themes in my uploaded documents?",
   "Summarize the main arguments presented",
   "What evidence supports the conclusions?",
-  "How can this research be applied in practice?",
-  "What are the potential limitations or risks?"
-]
-
-const uploadedDocuments = [
-  { id: '1', name: 'Market_Analysis_2024.pdf', status: 'ready' },
-  { id: '2', name: 'Technical_Specifications.docx', status: 'ready' },
-  { id: '3', name: 'Industry_Report.pdf', status: 'ready' }
+  "How can this research be applied in practice?"
 ]
 
 export default function Chat() {
@@ -54,7 +38,6 @@ export default function Chat() {
   ])
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
-  const [selectedDocument, setSelectedDocument] = useState<string>("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
@@ -119,211 +102,136 @@ export default function Chat() {
     setInputValue(question)
   }
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const clearChat = () => {
+    setMessages([{
+      id: '1',
+      content: "Hello! I'm your AI assistant for document analysis. I can help you understand, analyze, and extract insights from your uploaded documents. What would you like to know?",
+      sender: 'ai',
+      timestamp: new Date()
+    }])
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">
-          Ask Your Documents
-        </h1>
-        <p className="text-xl text-muted-foreground">
-          Get intelligent insights and answers from your uploaded documents through natural conversation.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-4 gap-8">
-        {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Document Context */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Document Context
-              </CardTitle>
-              <CardDescription>
-                Documents available for analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {uploadedDocuments.map((doc) => (
-                <div 
-                  key={doc.id} 
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                    selectedDocument === doc.id 
-                      ? 'bg-primary/10 border border-primary/20' 
-                      : 'bg-muted/50 hover:bg-muted'
-                  }`}
-                  onClick={() => setSelectedDocument(doc.id)}
-                >
-                  <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{doc.name}</p>
-                    <Badge variant="default" className="text-xs bg-success text-success-foreground">
-                      Ready
-                    </Badge>
-                  </div>
-                  {selectedDocument === doc.id && (
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                  )}
-                </div>
-              ))}
-              
-              <Button variant="outline" size="sm" className="w-full mt-4">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload More
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Sample Questions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="w-5 h-5" />
-                Sample Questions
-              </CardTitle>
-              <CardDescription>
-                Try these to get started
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {sampleQuestions.map((question, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  className="w-full justify-start text-left h-auto p-3 whitespace-normal"
-                  onClick={() => handleSampleQuestion(question)}
-                >
-                  <Sparkles className="w-4 h-4 mr-2 shrink-0 text-primary" />
-                  <span className="text-sm">{question}</span>
-                </Button>
-              ))}
-            </CardContent>
-          </Card>
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold">Document Analysis Chat</h1>
+            <p className="text-sm text-muted-foreground">Ask questions about your uploaded documents</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearChat}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New Chat
+          </Button>
         </div>
+      </header>
 
-        {/* Chat Area */}
-        <div className="lg:col-span-3">
-          <Card className="h-[700px] flex flex-col">
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5" />
-                AI Document Analysis
-              </CardTitle>
-              <CardDescription>
-                Ask questions about your documents and get intelligent, contextual answers
-              </CardDescription>
-            </CardHeader>
-
-            {/* Messages */}
-            <CardContent className="flex-1 overflow-y-auto p-0">
-              <div className="space-y-4 p-6">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {messages.length === 1 && (
+            <div className="mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                {sampleQuestions.map((question, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="h-auto p-4 text-left justify-start whitespace-normal"
+                    onClick={() => handleSampleQuestion(question)}
                   >
-                    {message.sender === 'ai' && (
-                      <Avatar className="w-8 h-8 bg-primary">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          <Bot className="w-4 h-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    
-                    <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-first' : ''}`}>
-                    <div
-                      className={`rounded-2xl px-4 py-3 ${
-                        message.sender === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : message.error
-                          ? 'bg-destructive/10 border border-destructive/20 text-destructive'
-                          : 'bg-muted'
-                      }`}
-                    >
-                      {message.error && (
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="text-xs font-medium">Error</span>
-                        </div>
-                      )}
-                      <p className="text-sm leading-relaxed">{message.content}</p>
-                    </div>
-                      <div className={`flex items-center gap-1 mt-1 text-xs text-muted-foreground ${
-                        message.sender === 'user' ? 'justify-end' : 'justify-start'
-                      }`}>
-                        <Clock className="w-3 h-3" />
-                        {formatTime(message.timestamp)}
-                      </div>
-                    </div>
-
-                    {message.sender === 'user' && (
-                      <Avatar className="w-8 h-8 bg-secondary">
-                        <AvatarFallback>
-                          <User className="w-4 h-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
+                    <Sparkles className="w-4 h-4 mr-3 shrink-0 text-primary" />
+                    <span className="text-sm">{question}</span>
+                  </Button>
                 ))}
+              </div>
+            </div>
+          )}
 
-                {/* Typing Indicator */}
-                {isTyping && (
-                  <div className="flex gap-3 justify-start">
-                    <Avatar className="w-8 h-8 bg-primary">
+          <div className="space-y-6">
+            {messages.map((message) => (
+              <div key={message.id} className="group">
+                <div className={`flex gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {message.sender === 'ai' && (
+                    <Avatar className="w-8 h-8 shrink-0 mt-1">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         <Bot className="w-4 h-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="bg-muted rounded-2xl px-4 py-3">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </div>
+                  )}
+                  
+                  <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-first' : ''}`}>
+                    <div className={`rounded-2xl px-4 py-3 ${
+                      message.sender === 'user'
+                        ? 'bg-primary text-primary-foreground ml-auto'
+                        : 'bg-muted/50'
+                    }`}>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                     </div>
                   </div>
-                )}
 
-                <div ref={messagesEndRef} />
-              </div>
-            </CardContent>
-
-            {/* Input Area */}
-            <div className="border-t p-4">
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ask me anything about your documents..."
-                    className="pr-12"
-                    disabled={isTyping}
-                  />
+                  {message.sender === 'user' && (
+                    <Avatar className="w-8 h-8 shrink-0 mt-1">
+                      <AvatarFallback className="bg-secondary">
+                        <User className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
-                <Button 
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isTyping}
-                  size="icon"
-                  className="shrink-0"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
               </div>
-              
-              <p className="text-xs text-muted-foreground mt-2">
-                {selectedDocument 
-                  ? `Chatting with: ${uploadedDocuments.find(d => d.id === selectedDocument)?.name}` 
-                  : "Please select a document above to start chatting"
-                }
-              </p>
+            ))}
+
+            {/* Typing Indicator */}
+            {isTyping && (
+              <div className="flex gap-4 justify-start">
+                <Avatar className="w-8 h-8 shrink-0 mt-1">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    <Bot className="w-4 h-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="bg-muted/50 rounded-2xl px-4 py-3">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 relative">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Message ChatGPT..."
+                className="min-h-[48px] pr-12 resize-none border-border/50 bg-muted/30"
+                disabled={isTyping}
+              />
             </div>
-          </Card>
+            <Button 
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isTyping}
+              size="icon"
+              className="shrink-0 h-12 w-12"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
