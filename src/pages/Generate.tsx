@@ -24,7 +24,7 @@ import {
 } from "@/lib/api"
 import { TemplateSelector } from "@/components/TemplateSelector"
 import { PdfViewer } from "@/components/PdfViewer"
-import { WordEditor } from "@/components/WordEditor"
+import { PagedWordEditor } from "@/components/PagedWordEditor"
 import { ConversionToolbar } from "@/components/ConversionToolbar"
 import { useDocumentConversion } from "@/hooks/useDocumentConversion"
 
@@ -214,7 +214,7 @@ export default function Generate() {
     if (!generatedFile) return
     
     try {
-      await saveChanges(generatedFile.filename)
+      await saveChanges(generatedFile.filename, editedContent)
     } catch (error) {
       console.error('Save failed:', error)
     }
@@ -224,7 +224,7 @@ export default function Generate() {
     if (!generatedFile) return
     
     try {
-      await exportToPdf(generatedFile.filename)
+      await exportToPdf(generatedFile.filename, editedContent)
     } catch (error) {
       console.error('PDF export failed:', error)
     }
@@ -234,7 +234,7 @@ export default function Generate() {
     if (!generatedFile) return
     
     try {
-      await exportToWord(generatedFile.filename)
+      await exportToWord(generatedFile.filename, editedContent)
     } catch (error) {
       console.error('Word export failed:', error)
     }
@@ -528,7 +528,7 @@ export default function Generate() {
                   className="h-full w-full"
                 />
               ) : (
-                <WordEditor
+                <PagedWordEditor
                   value={editedContent}
                   onChange={updateContent}
                   onSave={handleSaveWordChanges}

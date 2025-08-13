@@ -1,4 +1,3 @@
-
 import { pdfParser, ParsedPdfContent } from './pdfParser'
 import jsPDF from 'jspdf'
 
@@ -79,56 +78,118 @@ export class PdfToWordConverter {
     
     // Add document title if available
     if (parsedContent.metadata.title) {
-      html += `<h1>${parsedContent.metadata.title}</h1>\n`
+      html += `<h1 style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0;">${parsedContent.metadata.title}</h1>\n`
     }
     
     // Process content with better formatting
     parsedContent.pages.forEach((page, pageIndex) => {
       if (pageIndex > 0) {
-        html += '<div style="page-break-before: always;"></div>\n'
+        html += '<div style="page-break-before: always; margin-top: 40px;"></div>\n'
       }
       
       const lines = page.text.split('\n')
       let inList = false
+      let inTable = false
       
-      lines.forEach(line => {
+      lines.forEach((line, lineIndex) => {
         const trimmedLine = line.trim()
-        if (!trimmedLine) return
+        if (!trimmedLine) {
+          if (!inList && !inTable) {
+            html += '<br>\n'
+          }
+          return
+        }
         
-        // Detect different content types
-        if (trimmedLine.startsWith('#')) {
+        // Detect different content types with better formatting
+        if (this.isHeading(trimmedLine)) {
           if (inList) {
             html += '</ul>\n'
             inList = false
           }
-          const headingText = trimmedLine.substring(1).trim()
-          html += `<h2>${headingText}</h2>\n`
+          const level = this.getHeadingLevel(trimmedLine)
+          const headingText = trimmedLine.replace(/^#+\s*/, '').trim()
+          html += `<h${level} style="font-weight: bold; margin: 20px 0 10px 0; color: #333;">${headingText}</h${level}>\n`
         } else if (this.isBulletPoint(trimmedLine)) {
           if (!inList) {
-            html += '<ul>\n'
+            html += '<ul style="margin: 10px 0; padding-left: 30px;">\n'
             inList = true
           }
-          const listText = trimmedLine.replace(/^[\s•\-\*]+/, '').trim()
-          html += `<li>${listText}</li>\n`
+          const listText = trimmedLine.replace(/^[\s•\-\*\d\.]+/, '').trim()
+          html += `<li style="margin: 5px 0;">${listText}</li>\n`
+        } else if (this.isTableRow(trimmedLine)) {
+          if (!inTable) {
+            html += '<table style="width: 100%; border-collapse: collapse; margin: 15px 0;">\n'
+            inTable = true
+          }
+          const cells = this.parseTableCells(trimmedLine)
+          html += '<tr>\n'
+          cells.forEach(cell => {
+            html += `<td style="border: 1px solid #ccc; padding: 8px;">${cell}</td>\n`
+          })
+          html += '</tr>\n'
         } else {
           if (inList) {
             html += '</ul>\n'
             inList = false
           }
-          html += `<p>${trimmedLine}</p>\n`
+          if (inTable && !this.isTableRow(lines[lineIndex + 1])) {
+            html += '</table>\n'
+            inTable = false
+          }
+          
+          if (!inTable) {
+            // Format regular paragraphs with better styling
+            const formattedText = this.formatInlineText(trimmedLine)
+            html += `<p style="margin: 10px 0; line-height: 1.6; text-align: justify;">${formattedText}</p>\n`
+          }
         }
       })
       
+      // Close any open lists
       if (inList) {
         html += '</ul>\n'
+      }
+      if (inTable) {
+        html += '</table>\n'
       }
     })
     
     return html
   }
 
+  private isHeading(line: string): boolean {
+    return /^#+\s/.test(line) || 
+           /^[A-Z][A-Z\s]{3,}$/.test(line) ||
+           line.length < 50 && /^[A-Z]/.test(line) && !line.includes('.')
+  }
+
+  private getHeadingLevel(line: string): number {
+    const hashMatch = line.match(/^(#+)/)
+    if (hashMatch) {
+      return Math.min(hashMatch[1].length, 6)
+    }
+    return 2 // Default heading level
+  }
+
   private isBulletPoint(line: string): boolean {
     return /^[\s]*[•\-\*]\s/.test(line) || /^\d+\.\s/.test(line)
+  }
+
+  private isTableRow(line: string): boolean {
+    return line && (line.includes('|') || line.includes('\t'))
+  }
+
+  private parseTableCells(line: string): string[] {
+    return line.split(/[\|\t]/).map(cell => cell.trim()).filter(cell => cell.length > 0)
+  }
+
+  private formatInlineText(text: string): string {
+    // Basic inline formatting
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/__(.*?)__/g, '<strong>$1</strong>')
+      .replace(/_(.*?)_/g, '<em>$1</em>')
   }
 
   async convertWordToPdf(
@@ -137,7 +198,7 @@ export class PdfToWordConverter {
     formatting: Partial<DocumentFormatting> = {}
   ): Promise<{ download_url: string; filename: string }> {
     try {
-      console.log('🔄 Starting frontend Word to PDF conversion...')
+      console.log('🔄 Starting enhanced Word to PDF conversion...')
       
       const defaultFormatting: DocumentFormatting = {
         fontSize: 12,
@@ -148,36 +209,60 @@ export class PdfToWordConverter {
       
       const finalFormatting = { ...defaultFormatting, ...formatting }
       
-      // Create PDF using jsPDF
+      // Create PDF with better formatting
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       })
 
-      // Convert HTML to plain text and add to PDF
-      const textContent = this.htmlToText(wordContent)
-      const lines = pdf.splitTextToSize(textContent, 170) // Adjust for margins
+      // Enhanced HTML to text conversion
+      const { text, structure } = this.htmlToStructuredText(wordContent)
       
       let yPosition = finalFormatting.margins.top
       const lineHeight = finalFormatting.fontSize * finalFormatting.lineSpacing * 0.35
+      const pageHeight = 297 // A4 height in mm
+      const maxWidth = 210 - finalFormatting.margins.left - finalFormatting.margins.right
       
-      lines.forEach((line: string, index: number) => {
-        if (yPosition > 277 - finalFormatting.margins.bottom) { // A4 height - margin
+      structure.forEach((element) => {
+        // Check if we need a new page
+        if (yPosition > pageHeight - finalFormatting.margins.bottom - 20) {
           pdf.addPage()
           yPosition = finalFormatting.margins.top
         }
         
-        pdf.setFontSize(finalFormatting.fontSize)
-        pdf.text(line, finalFormatting.margins.left, yPosition)
-        yPosition += lineHeight
+        // Set font based on element type
+        if (element.type === 'heading') {
+          pdf.setFontSize(finalFormatting.fontSize + 4)
+          pdf.setFont('helvetica', 'bold')
+          yPosition += 10 // Extra space before heading
+        } else {
+          pdf.setFontSize(finalFormatting.fontSize)
+          pdf.setFont('helvetica', 'normal')
+        }
+        
+        // Split text to fit page width
+        const lines = pdf.splitTextToSize(element.text, maxWidth)
+        
+        lines.forEach((line: string) => {
+          if (yPosition > pageHeight - finalFormatting.margins.bottom) {
+            pdf.addPage()
+            yPosition = finalFormatting.margins.top
+          }
+          
+          pdf.text(line, finalFormatting.margins.left, yPosition)
+          yPosition += lineHeight
+        })
+        
+        // Add space after element
+        yPosition += element.type === 'heading' ? 5 : 2
       })
 
       // Generate blob and create download URL
       const pdfBlob = pdf.output('blob')
       const downloadUrl = URL.createObjectURL(pdfBlob)
       
-      console.log('✅ Frontend Word to PDF conversion completed')
+      console.log('✅ Enhanced Word to PDF conversion completed')
       
       return {
         download_url: downloadUrl,
@@ -189,16 +274,18 @@ export class PdfToWordConverter {
     }
   }
 
-  private htmlToText(html: string): string {
-    // Create a temporary div to parse HTML
+  private htmlToStructuredText(html: string): { text: string; structure: Array<{type: string; text: string}> } {
     const div = document.createElement('div')
     div.innerHTML = html
     
-    // Convert HTML elements to formatted text
     let text = ''
+    const structure: Array<{type: string; text: string}> = []
+    
     const processNode = (node: Node) => {
       if (node.nodeType === Node.TEXT_NODE) {
-        text += node.textContent || ''
+        const textContent = node.textContent || ''
+        text += textContent
+        return textContent
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as Element
         
@@ -206,31 +293,46 @@ export class PdfToWordConverter {
           case 'h1':
           case 'h2':
           case 'h3':
-            text += '\n\n' + (element.textContent || '').toUpperCase() + '\n'
-            break
+          case 'h4':
+          case 'h5':
+          case 'h6':
+            const headingText = element.textContent || ''
+            structure.push({ type: 'heading', text: headingText })
+            text += '\n\n' + headingText + '\n'
+            return headingText
           case 'p':
-            text += '\n' + (element.textContent || '') + '\n'
-            break
+            const pText = element.textContent || ''
+            structure.push({ type: 'paragraph', text: pText })
+            text += '\n' + pText + '\n'
+            return pText
           case 'br':
             text += '\n'
-            break
+            return '\n'
           case 'li':
-            text += '\n• ' + (element.textContent || '')
-            break
+            const liText = '• ' + (element.textContent || '')
+            structure.push({ type: 'list-item', text: liText })
+            text += '\n' + liText
+            return liText
           case 'ul':
           case 'ol':
             text += '\n'
             element.childNodes.forEach(processNode)
             text += '\n'
-            return
+            return ''
           default:
-            element.childNodes.forEach(processNode)
+            let childText = ''
+            element.childNodes.forEach(child => {
+              childText += processNode(child)
+            })
+            return childText
         }
       }
+      return ''
     }
     
     div.childNodes.forEach(processNode)
-    return text.replace(/\n{3,}/g, '\n\n').trim()
+    
+    return { text: text.replace(/\n{3,}/g, '\n\n').trim(), structure }
   }
 
   // Extract text content for preview/editing

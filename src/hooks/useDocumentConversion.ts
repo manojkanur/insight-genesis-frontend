@@ -67,7 +67,7 @@ export function useDocumentConversion() {
 
       toast({
         title: "Conversion successful",
-        description: "PDF has been converted to editable Word format using advanced parsing.",
+        description: "PDF has been converted to editable Word format.",
       })
 
       return result
@@ -99,13 +99,13 @@ export function useDocumentConversion() {
     }))
   }, [])
 
-  const saveChanges = useCallback(async (filename: string) => {
+  // Fix: Accept content as parameter instead of using stale state
+  const saveChanges = useCallback(async (filename: string, content: string) => {
     setState(prev => ({ ...prev, isSaving: true }))
 
     try {
-      // Convert the edited content back to PDF using frontend conversion
       const response = await pdfConverter.convertWordToPdf(
-        state.editedContent,
+        content,
         filename.replace('.pdf', '_edited.pdf'),
         {
           fontSize: 12,
@@ -119,12 +119,12 @@ export function useDocumentConversion() {
         ...prev,
         isSaving: false,
         hasUnsavedChanges: false,
-        wordContent: prev.editedContent // Update the saved version
+        wordContent: content // Update the saved version
       }))
 
       toast({
         title: "Changes saved",
-        description: "Your edits have been saved successfully using frontend processing.",
+        description: "Your edits have been saved successfully.",
       })
 
       return response
@@ -139,14 +139,15 @@ export function useDocumentConversion() {
       
       throw error
     }
-  }, [state.editedContent, toast])
+  }, [toast])
 
-  const exportToPdf = useCallback(async (filename: string) => {
+  // Fix: Accept content as parameter
+  const exportToPdf = useCallback(async (filename: string, content: string) => {
     setState(prev => ({ ...prev, isExporting: true }))
 
     try {
       const response = await pdfConverter.convertWordToPdf(
-        state.editedContent,
+        content,
         filename.replace('.pdf', '_edited.pdf'),
         {
           fontSize: 12,
@@ -183,11 +184,12 @@ export function useDocumentConversion() {
       
       throw error
     }
-  }, [state.editedContent, toast])
+  }, [toast])
 
-  const exportToWord = useCallback(async (filename: string) => {
+  // Fix: Accept content as parameter
+  const exportToWord = useCallback(async (filename: string, content: string) => {
     try {
-      await pdfConverter.downloadAsWord(state.editedContent, filename)
+      await pdfConverter.downloadAsWord(content, filename)
 
       toast({
         title: "Word document downloaded",
@@ -202,7 +204,7 @@ export function useDocumentConversion() {
       
       throw error
     }
-  }, [state.editedContent, toast])
+  }, [toast])
 
   const resetConversion = useCallback(() => {
     setState({
