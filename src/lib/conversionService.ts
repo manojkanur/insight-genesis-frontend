@@ -70,15 +70,30 @@ export class PdfToWordConverter {
     try {
       console.log('🔄 Starting Word to PDF conversion...')
       
+      // Provide default formatting values to ensure all required properties are present
+      const defaultFormatting = {
+        fontSize: 12,
+        fontFamily: 'Times New Roman',
+        lineSpacing: 1.6,
+        margins: { top: 1, bottom: 1, left: 1, right: 1 }
+      }
+      
+      const finalFormatting = {
+        fontSize: formatting?.fontSize ?? defaultFormatting.fontSize,
+        fontFamily: formatting?.fontFamily ?? defaultFormatting.fontFamily,
+        lineSpacing: formatting?.lineSpacing ?? defaultFormatting.lineSpacing,
+        margins: {
+          top: formatting?.margins?.top ?? defaultFormatting.margins.top,
+          bottom: formatting?.margins?.bottom ?? defaultFormatting.margins.bottom,
+          left: formatting?.margins?.left ?? defaultFormatting.margins.left,
+          right: formatting?.margins?.right ?? defaultFormatting.margins.right
+        }
+      }
+      
       const response = await apiConvertWordToPdf({
         word_content: wordContent,
         filename,
-        formatting: formatting || {
-          fontSize: 12,
-          fontFamily: 'Times New Roman',
-          lineSpacing: 1.6,
-          margins: { top: 1, bottom: 1, left: 1, right: 1 }
-        }
+        formatting: finalFormatting
       })
       
       console.log('✅ Word to PDF conversion completed')
