@@ -12,12 +12,14 @@ import {
   Loader2, 
   Sparkles,
   Lightbulb,
-  Zap
+  Zap,
+  Download,
+  Save
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { generateWhitepaper, ApiError, GenerateResponse } from "@/lib/api"
+import { generateWhitepaper, ApiError, GenerateResponse, downloadFile } from "@/lib/api"
 import { TemplateSelector } from "@/components/TemplateSelector"
-import { PdfEditor } from "@/components/PdfEditor"
+import { PdfViewer } from "@/components/PdfViewer"
 
 interface GenerationForm {
   title: string
@@ -62,6 +64,7 @@ export default function Generate() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [generatedFile, setGeneratedFile] = useState<GenerateResponse | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,7 +125,7 @@ export default function Generate() {
 
       toast({
         title: "Whitepaper generated successfully!",
-        description: "Your AI-powered whitepaper is ready for review and editing.",
+        description: "Your AI-powered whitepaper is ready for download.",
       })
     } catch (error) {
       const apiError = error as ApiError
@@ -136,8 +139,63 @@ export default function Generate() {
     }
   }
 
+  const handleDownload = async () => {
+    if (!generatedFile) return
+    
+    setIsDownloading(true)
+    try {
+      const blob = await downloadFile(generatedFile.pdf_url)
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = generatedFile.filename || 'whitepaper.pdf'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      toast({
+        title: "Download successful",
+        description: "Your whitepaper has been downloaded.",
+      })
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Unable to download the file. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleSave = () => {
+    // This would typically save to user's account/history
+    toast({
+      title: "Whitepaper saved",
+      description: "Your whitepaper has been saved to your documents.",
+    })
+  }
+
   const updateForm = (field: keyof GenerationForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  const resetForm = () => {
+    setForm({
+      title: "",
+      industry: "",
+      audience: "",
+      problemStatement: "",
+      solutionOutline: "",
+      tone: "",
+      length: ""
+    })
+    setSelectedTemplate(null)
+    setGeneratedFile(null)
+    setProgress(0)
   }
 
   return (
@@ -328,16 +386,63 @@ export default function Generate() {
             )}
           </div>
         ) : (
-          <PdfEditor 
-            pdfUrl={generatedFile.pdf_url}
-            filename={generatedFile.filename}
-            initialContent={generatedFile.content}
-            title={form.title}
-          />
+          // Generated PDF View
+          <div className="h-full flex flex-col">
+            {/* Header with actions */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-primary" />
+                <div>
+                  <h3 className="font-semibold">Generated Whitepaper</h3>
+                  <p className="text-sm text-muted-foreground">{generatedFile.filename}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSave}
+                  className="gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="gap-2"
+                >
+                  {isDownloading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  Download PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetForm}
+                >
+                  Generate New
+                </Button>
+              </div>
+            </div>
+
+            {/* PDF Viewer */}
+            <div className="flex-1 overflow-hidden">
+              <PdfViewer 
+                pdfUrl={generatedFile.pdf_url}
+                className="h-full w-full"
+              />
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Right Sidebar - Template Selector */}
+      {/* Right Sidebar - Template Selector (only show when not generated) */}
       {!generatedFile && (
         <TemplateSelector 
           selectedTemplate={selectedTemplate}
