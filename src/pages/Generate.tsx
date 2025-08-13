@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,9 +16,19 @@ import {
   Save
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { generateWhitepaper, ApiError, GenerateResponse, downloadFile } from "@/lib/api"
+import { 
+  generateWhitepaper, 
+  ApiError, 
+  GenerateResponse, 
+  downloadFile,
+  convertPdfToWord,
+  convertWordToPdf
+} from "@/lib/api"
 import { TemplateSelector } from "@/components/TemplateSelector"
 import { PdfViewer } from "@/components/PdfViewer"
+import { WordEditor } from "@/components/WordEditor"
+import { ConversionToolbar } from "@/components/ConversionToolbar"
+import { ViewToggle } from "@/components/ViewToggle"
 
 interface GenerationForm {
   title: string
@@ -65,6 +74,14 @@ export default function Generate() {
   const [progress, setProgress] = useState(0)
   const [generatedFile, setGeneratedFile] = useState<GenerateResponse | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isConverted, setIsConverted] = useState(false)
+  const [isConverting, setIsConverting] = useState(false)
+  const [viewMode, setViewMode] = useState<'pdf' | 'word'>('pdf')
+  const [wordContent, setWordContent] = useState<string>('')
+  const [editedWordContent, setEditedWordContent] = useState<string>('')
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,16 +188,164 @@ export default function Generate() {
     }
   }
 
+  const handleConvertToWord = async () => {
+    if (!generatedFile) return
+    
+    setIsConverting(true)
+    try {
+      const response = await convertPdfToWord(generatedFile.pdf_url)
+      
+      setWordContent(response.word_content)
+      setEditedWordContent(response.word_content)
+      setIsConverted(true)
+      setViewMode('word')
+      
+      toast({
+        title: "Conversion successful",
+        description: "PDF has been converted to editable Word format.",
+      })
+    } catch (error) {
+      toast({
+        title: "Conversion failed",
+        description: "Unable to convert PDF to Word format.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsConverting(false)
+    }
+  }
+
+  const handleWordContentChange = (content: string) => {
+    setEditedWordContent(content)
+    setHasUnsavedChanges(true)
+  }
+
+  const handleSaveWordChanges = async () => {
+    if (!generatedFile) return
+    
+    setIsSaving(true)
+    try {
+      const response = await convertWordToPdf({
+        word_content: editedWordContent,
+        filename: generatedFile.filename.replace('.pdf', '_edited.pdf'),
+        formatting: {
+          fontSize: 12,
+          fontFamily: 'Times New Roman',
+          lineSpacing: 1.6,
+          margins: {
+            top: 1,
+            bottom: 1,
+            left: 1,
+            right: 1
+          }
+        }
+      })
+      
+      // Update the PDF URL with the new edited version
+      setGeneratedFile(prev => prev ? { ...prev, pdf_url: response.download_url } : null)
+      setHasUnsavedChanges(false)
+      
+      toast({
+        title: "Changes saved",
+        description: "Your edits have been saved and PDF updated.",
+      })
+    } catch (error) {
+      toast({
+        title: "Save failed",
+        description: "Unable to save changes. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDownloadEditedPdf = async () => {
+    if (!generatedFile) return
+    
+    setIsExporting(true)
+    try {
+      let downloadUrl = generatedFile.pdf_url
+      
+      // If there are unsaved changes, generate new PDF first
+      if (hasUnsavedChanges) {
+        const response = await convertWordToPdf({
+          word_content: editedWordContent,
+          filename: generatedFile.filename.replace('.pdf', '_edited.pdf'),
+          formatting: {
+            fontSize: 12,
+            fontFamily: 'Times New Roman',
+            lineSpacing: 1.6,
+            margins: { top: 1, bottom: 1, left: 1, right: 1 }
+          }
+        })
+        downloadUrl = response.download_url
+      }
+      
+      const blob = await downloadFile(downloadUrl)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = generatedFile.filename.replace('.pdf', '_edited.pdf')
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      toast({
+        title: "Download successful",
+        description: "Your edited PDF has been downloaded.",
+      })
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Unable to download the file. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleDownloadWord = async () => {
+    if (!editedWordContent) return
+    
+    try {
+      const blob = new Blob([editedWordContent], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${generatedFile?.filename.replace('.pdf', '') || 'document'}_edited.docx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      toast({
+        title: "Word document downloaded",
+        description: "Edited content has been downloaded as Word document.",
+      })
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Unable to download Word document.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleToggleView = () => {
+    setViewMode(prev => prev === 'pdf' ? 'word' : 'pdf')
+  }
+
   const handleSave = () => {
     // This would typically save to user's account/history
     toast({
       title: "Whitepaper saved",
       description: "Your whitepaper has been saved to your documents.",
     })
-  }
-
-  const updateForm = (field: keyof GenerationForm, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }))
   }
 
   const resetForm = () => {
@@ -196,6 +361,12 @@ export default function Generate() {
     setSelectedTemplate(null)
     setGeneratedFile(null)
     setProgress(0)
+    // Reset word editing states
+    setIsConverted(false)
+    setViewMode('pdf')
+    setWordContent('')
+    setEditedWordContent('')
+    setHasUnsavedChanges(false)
   }
 
   return (
@@ -386,7 +557,7 @@ export default function Generate() {
             )}
           </div>
         ) : (
-          // Generated PDF View
+          // Generated PDF View with Word Conversion
           <div className="h-full flex flex-col">
             {/* Header with actions */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -431,12 +602,43 @@ export default function Generate() {
               </div>
             </div>
 
-            {/* PDF Viewer */}
-            <div className="flex-1 overflow-hidden">
-              <PdfViewer 
-                pdfUrl={generatedFile.pdf_url}
-                className="h-full w-full"
+            {/* Conversion Toolbar */}
+            <div className="p-4">
+              <ConversionToolbar
+                isConverted={isConverted}
+                isConverting={isConverting}
+                viewMode={viewMode}
+                hasUnsavedChanges={hasUnsavedChanges}
+                isSaving={isSaving}
+                isExporting={isExporting}
+                onConvert={handleConvertToWord}
+                onSave={handleSaveWordChanges}
+                onDownloadPdf={handleDownloadEditedPdf}
+                onDownloadWord={handleDownloadWord}
+                onToggleView={handleToggleView}
+                filename={generatedFile.filename}
               />
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-hidden px-4 pb-4">
+              {viewMode === 'pdf' ? (
+                <PdfViewer 
+                  pdfUrl={generatedFile.pdf_url}
+                  className="h-full w-full"
+                />
+              ) : (
+                <WordEditor
+                  value={editedWordContent}
+                  onChange={handleWordContentChange}
+                  onSave={handleSaveWordChanges}
+                  onDownloadPdf={handleDownloadEditedPdf}
+                  onDownloadWord={handleDownloadWord}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  isSaving={isSaving}
+                  placeholder="Edit your whitepaper content here..."
+                />
+              )}
             </div>
           </div>
         )}
