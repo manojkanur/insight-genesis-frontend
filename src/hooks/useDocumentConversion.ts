@@ -2,7 +2,6 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { pdfConverter, ConversionResult } from '@/lib/conversionService'
-import { downloadFile } from '@/lib/api'
 
 export interface ConversionState {
   isConverting: boolean
@@ -13,6 +12,7 @@ export interface ConversionState {
   wordContent: string
   editedContent: string
   originalPdfUrl: string
+  conversionProgress: number
   error: string | null
 }
 
@@ -26,6 +26,7 @@ export function useDocumentConversion() {
     wordContent: '',
     editedContent: '',
     originalPdfUrl: '',
+    conversionProgress: 0,
     error: null
   })
 
@@ -36,11 +37,23 @@ export function useDocumentConversion() {
       ...prev, 
       isConverting: true, 
       error: null,
-      originalPdfUrl: pdfUrl 
+      originalPdfUrl: pdfUrl,
+      conversionProgress: 0
     }))
 
     try {
-      const result: ConversionResult = await pdfConverter.convertPdfToWord(pdfUrl)
+      const result: ConversionResult = await pdfConverter.convertPdfToWord(
+        pdfUrl,
+        {
+          extractImages: true,
+          preserveFormatting: true,
+          includeHeaders: true,
+          includeFooters: true
+        },
+        (progress) => {
+          setState(prev => ({ ...prev, conversionProgress: progress }))
+        }
+      )
       
       setState(prev => ({
         ...prev,
@@ -48,12 +61,13 @@ export function useDocumentConversion() {
         isConverted: true,
         wordContent: result.wordContent,
         editedContent: result.wordContent,
-        hasUnsavedChanges: false
+        hasUnsavedChanges: false,
+        conversionProgress: 100
       }))
 
       toast({
         title: "Conversion successful",
-        description: "PDF has been converted to editable Word format.",
+        description: "PDF has been converted to editable Word format using advanced parsing.",
       })
 
       return result
@@ -63,7 +77,8 @@ export function useDocumentConversion() {
       setState(prev => ({
         ...prev,
         isConverting: false,
-        error: errorMessage
+        error: errorMessage,
+        conversionProgress: 0
       }))
 
       toast({
@@ -88,10 +103,16 @@ export function useDocumentConversion() {
     setState(prev => ({ ...prev, isSaving: true }))
 
     try {
-      // Convert the edited content back to PDF
+      // Convert the edited content back to PDF using frontend conversion
       const response = await pdfConverter.convertWordToPdf(
         state.editedContent,
-        filename.replace('.pdf', '_edited.pdf')
+        filename.replace('.pdf', '_edited.pdf'),
+        {
+          fontSize: 12,
+          fontFamily: 'Times New Roman',
+          lineSpacing: 1.6,
+          margins: { top: 20, bottom: 20, left: 20, right: 20 }
+        }
       )
 
       setState(prev => ({
@@ -103,7 +124,7 @@ export function useDocumentConversion() {
 
       toast({
         title: "Changes saved",
-        description: "Your edits have been saved successfully.",
+        description: "Your edits have been saved successfully using frontend processing.",
       })
 
       return response
@@ -126,19 +147,22 @@ export function useDocumentConversion() {
     try {
       const response = await pdfConverter.convertWordToPdf(
         state.editedContent,
-        filename.replace('.pdf', '_edited.pdf')
+        filename.replace('.pdf', '_edited.pdf'),
+        {
+          fontSize: 12,
+          fontFamily: 'Times New Roman',
+          lineSpacing: 1.6,
+          margins: { top: 20, bottom: 20, left: 20, right: 20 }
+        }
       )
 
       // Download the PDF
-      const blob = await downloadFile(response.download_url)
-      const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
-      link.href = url
+      link.href = response.download_url
       link.download = response.filename
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
 
       setState(prev => ({ ...prev, isExporting: false }))
 
@@ -163,19 +187,7 @@ export function useDocumentConversion() {
 
   const exportToWord = useCallback(async (filename: string) => {
     try {
-      // Create a proper Word document blob
-      const blob = new Blob([state.editedContent], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      })
-      
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${filename.replace('.pdf', '')}_edited.docx`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      await pdfConverter.downloadAsWord(state.editedContent, filename)
 
       toast({
         title: "Word document downloaded",
@@ -202,6 +214,7 @@ export function useDocumentConversion() {
       wordContent: '',
       editedContent: '',
       originalPdfUrl: '',
+      conversionProgress: 0,
       error: null
     })
   }, [])
