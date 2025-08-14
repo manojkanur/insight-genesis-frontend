@@ -1,17 +1,19 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { 
   FileText, 
   Loader2, 
   Sparkles,
   Download,
-  Save
+  Save,
+  Lightbulb,
+  RefreshCw
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { 
@@ -30,6 +32,8 @@ interface GenerationForm {
   title: string
   industry: string
   audience: string
+  context: string
+  solutionOutline: string
 }
 
 const industries = [
@@ -42,11 +46,39 @@ const audiences = [
   "Investors", "Government Officials", "Academic Researchers", "General Public"
 ]
 
+// AI-powered suggestion service
+const generateSuggestions = (title: string, industry: string) => {
+  if (!title.trim()) return { context: [], solutionOutline: [] }
+  
+  const contextSuggestions = [
+    `Current challenges in ${industry.toLowerCase()} industry regarding ${title.toLowerCase()}`,
+    `Market trends and opportunities related to ${title.toLowerCase()}`,
+    `Regulatory landscape and compliance requirements for ${title.toLowerCase()}`,
+    `Technology adoption barriers in ${industry.toLowerCase()} sector`,
+    `Economic impact and business case for ${title.toLowerCase()}`
+  ]
+  
+  const solutionSuggestions = [
+    `Comprehensive framework for implementing ${title.toLowerCase()}`,
+    `Step-by-step methodology to address key challenges`,
+    `Best practices and proven strategies from industry leaders`,
+    `Technology solutions and tools for ${title.toLowerCase()}`,
+    `ROI analysis and implementation roadmap`
+  ]
+  
+  return {
+    context: contextSuggestions.slice(0, 3),
+    solutionOutline: solutionSuggestions.slice(0, 3)
+  }
+}
+
 export default function Generate() {
   const [form, setForm] = useState<GenerationForm>({
     title: "",
     industry: "",
-    audience: ""
+    audience: "",
+    context: "",
+    solutionOutline: ""
   })
   
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
@@ -55,6 +87,11 @@ export default function Generate() {
   const [generatedFile, setGeneratedFile] = useState<GenerateResponse | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
   const [viewMode, setViewMode] = useState<'pdf' | 'word'>('pdf')
+  const [suggestions, setSuggestions] = useState<{
+    context: string[]
+    solutionOutline: string[]
+  }>({ context: [], solutionOutline: [] })
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false)
   const { toast } = useToast()
 
   // Use the conversion hook
@@ -75,6 +112,55 @@ export default function Generate() {
 
   const updateForm = (field: keyof GenerationForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
+    
+    // Generate suggestions when title or industry changes
+    if (field === 'title' || field === 'industry') {
+      const newForm = { ...form, [field]: value }
+      if (newForm.title && newForm.industry) {
+        const newSuggestions = generateSuggestions(newForm.title, newForm.industry)
+        setSuggestions(newSuggestions)
+      }
+    }
+  }
+
+  const generateAISuggestions = async () => {
+    if (!form.title || !form.industry) {
+      toast({
+        title: "Missing information",
+        description: "Please provide a title and industry first.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsGeneratingSuggestions(true)
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const newSuggestions = generateSuggestions(form.title, form.industry)
+      setSuggestions(newSuggestions)
+      
+      toast({
+        title: "Suggestions generated",
+        description: "AI-powered suggestions are ready for your review.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error generating suggestions",
+        description: "Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsGeneratingSuggestions(false)
+    }
+  }
+
+  const applySuggestion = (field: 'context' | 'solutionOutline', suggestion: string) => {
+    setForm(prev => ({
+      ...prev,
+      [field]: prev[field] ? `${prev[field]}\n\n${suggestion}` : suggestion
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,13 +203,13 @@ export default function Generate() {
         })
       }, 500)
 
-      // Call real API with simplified payload
+      // Call real API with updated payload
       const response = await generateWhitepaper({
         title: form.title,
         industry: form.industry,
         audience: form.audience,
-        problem_statement: "Auto-generated based on industry and audience",
-        solution_outline: "AI-powered whitepaper solution",
+        problem_statement: form.context || "Auto-generated based on industry and audience",
+        solution_outline: form.solutionOutline || "AI-powered whitepaper solution",
         tone: "Professional",
         length: "Medium (10-20 pages)",
         template: selectedTemplate
@@ -238,12 +324,15 @@ export default function Generate() {
     setForm({
       title: "",
       industry: "",
-      audience: ""
+      audience: "",
+      context: "",
+      solutionOutline: ""
     })
     setSelectedTemplate(null)
     setGeneratedFile(null)
     setProgress(0)
     setViewMode('pdf')
+    setSuggestions({ context: [], solutionOutline: [] })
     resetConversion()
   }
 
@@ -265,7 +354,7 @@ export default function Generate() {
 
               {!isGenerating ? (
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  {/* Basic Information - Only Required Section */}
+                  {/* Basic Information */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -317,6 +406,95 @@ export default function Generate() {
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Context and Solution Outline */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <Lightbulb className="w-5 h-5" />
+                            Context And Solution Outline
+                          </CardTitle>
+                          <CardDescription>
+                            Define the context and solution approach for your whitepaper
+                          </CardDescription>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={generateAISuggestions}
+                          disabled={isGeneratingSuggestions || !form.title || !form.industry}
+                          className="gap-2"
+                        >
+                          {isGeneratingSuggestions ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                          Get AI Suggestions
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="context">Context & Background</Label>
+                        <Textarea
+                          id="context"
+                          placeholder="Describe the current situation, challenges, or market context..."
+                          value={form.context}
+                          onChange={(e) => updateForm('context', e.target.value)}
+                          className="min-h-[120px] text-base"
+                        />
+                        {suggestions.context.length > 0 && (
+                          <div className="mt-3 p-3 bg-muted rounded-lg">
+                            <p className="text-sm font-medium mb-2">AI Suggestions for Context:</p>
+                            <div className="space-y-2">
+                              {suggestions.context.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => applySuggestion('context', suggestion)}
+                                  className="block w-full text-left p-2 text-sm bg-background hover:bg-accent rounded border transition-colors"
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="solutionOutline">Solution Outline</Label>
+                        <Textarea
+                          id="solutionOutline"
+                          placeholder="Outline your proposed solution, approach, or methodology..."
+                          value={form.solutionOutline}
+                          onChange={(e) => updateForm('solutionOutline', e.target.value)}
+                          className="min-h-[120px] text-base"
+                        />
+                        {suggestions.solutionOutline.length > 0 && (
+                          <div className="mt-3 p-3 bg-muted rounded-lg">
+                            <p className="text-sm font-medium mb-2">AI Suggestions for Solution:</p>
+                            <div className="space-y-2">
+                              {suggestions.solutionOutline.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => applySuggestion('solutionOutline', suggestion)}
+                                  className="block w-full text-left p-2 text-sm bg-background hover:bg-accent rounded border transition-colors"
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
