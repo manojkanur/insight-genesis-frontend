@@ -16,8 +16,7 @@ export class GroqAIService {
     solutionOutline: string[]
   }> {
     try {
-      const prompt = `
-As an expert whitepaper consultant, generate 3 unique context suggestions and 3 unique solution outline suggestions for a whitepaper titled "${title}" in the ${industry} industry.
+      const prompt = `As an expert whitepaper consultant, generate 3 unique context suggestions and 3 unique solution outline suggestions for a whitepaper titled "${title}" in the ${industry} industry.
 
 Please provide your response in the following JSON format:
 {
@@ -38,8 +37,7 @@ Guidelines:
 - Solution outline suggestions should provide actionable frameworks and methodologies
 - Make each suggestion specific to the title and industry
 - Keep suggestions professional and business-focused
-- Each suggestion should be 1-2 sentences long
-`
+- Each suggestion should be 1-2 sentences long`
 
       const response = await axios.post(
         GROQ_API_URL,
