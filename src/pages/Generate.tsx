@@ -136,21 +136,19 @@ export default function Generate() {
 
     setIsGeneratingSuggestions(true)
     try {
-      // Simulate API call delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Generate unique suggestions based on current title and industry
-      const newSuggestions = generateUniqueSuggestions(form.title, form.industry)
+      // Use real AI service instead of mock delay
+      const newSuggestions = await generateUniqueSuggestions(form.title, form.industry)
       setSuggestions(newSuggestions)
       
       toast({
         title: "AI suggestions generated",
-        description: "Unique suggestions tailored to your whitepaper topic are ready.",
+        description: "Unique AI-powered suggestions tailored to your whitepaper topic are ready.",
       })
     } catch (error) {
+      console.error('AI suggestion error:', error)
       toast({
         title: "Error generating suggestions",
-        description: "Please try again.",
+        description: "Failed to generate AI suggestions. Please try again.",
         variant: "destructive"
       })
     } finally {

@@ -1,11 +1,13 @@
 
-// Enhanced AI suggestion generator with unique content based on title
+import { groqAI } from './aiService'
+
+// Enhanced AI suggestion generator with real AI integration
 export interface SuggestionSet {
   context: string[]
   solutionOutline: string[]
 }
 
-// Industry-specific keywords and phrases
+// Industry-specific keywords and phrases for fallback
 const industryKeywords = {
   technology: ['digital transformation', 'innovation', 'automation', 'AI/ML', 'cloud computing', 'cybersecurity'],
   healthcare: ['patient care', 'medical technology', 'telemedicine', 'healthcare analytics', 'compliance', 'digital health'],
@@ -19,35 +21,7 @@ const industryKeywords = {
   agriculture: ['precision agriculture', 'crop monitoring', 'sustainable farming', 'agricultural technology', 'food security', 'agtech']
 }
 
-// Solution framework templates
-const solutionFrameworks = [
-  'comprehensive strategy framework',
-  'step-by-step implementation methodology',
-  'best practices and proven approaches',
-  'technology-driven solution architecture',
-  'risk mitigation and governance model',
-  'performance measurement framework',
-  'stakeholder engagement strategy',
-  'change management approach',
-  'scalable implementation roadmap',
-  'cost-benefit analysis model'
-]
-
-// Context scenario templates
-const contextScenarios = [
-  'current market challenges and opportunities',
-  'industry trends and disruptions',
-  'regulatory landscape and compliance requirements',
-  'technology adoption barriers and drivers',
-  'competitive landscape analysis',
-  'stakeholder needs and expectations',
-  'operational efficiency gaps',
-  'customer experience pain points',
-  'risk factors and mitigation strategies',
-  'emerging opportunities and threats'
-]
-
-// Generate hash from string for consistent randomization
+// Generate hash from string for consistent randomization (fallback)
 function generateHash(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -58,14 +32,14 @@ function generateHash(str: string): number {
   return Math.abs(hash)
 }
 
-// Seeded random function for consistent results based on input
+// Seeded random function for consistent results based on input (fallback)
 function seededRandom(seed: number, min: number = 0, max: number = 1): number {
   const x = Math.sin(seed) * 10000
   const random = x - Math.floor(x)
   return min + random * (max - min)
 }
 
-// Extract key terms from title for contextual suggestions
+// Extract key terms from title for contextual suggestions (fallback)
 function extractKeyTerms(title: string): string[] {
   const commonWords = ['the', 'of', 'in', 'to', 'for', 'and', 'or', 'but', 'a', 'an', 'is', 'are', 'was', 'were', 'how', 'what', 'why', 'when', 'where']
   return title
@@ -76,24 +50,62 @@ function extractKeyTerms(title: string): string[] {
     .slice(0, 3)
 }
 
-export const generateUniqueSuggestions = (title: string, industry: string): SuggestionSet => {
+// Main function to generate unique AI-powered suggestions
+export const generateUniqueSuggestions = async (title: string, industry: string): Promise<SuggestionSet> => {
   if (!title.trim() || !industry.trim()) {
     return { context: [], solutionOutline: [] }
   }
 
+  try {
+    // Use real AI to generate suggestions
+    const aiSuggestions = await groqAI.generateSuggestions(title, industry)
+    return aiSuggestions
+  } catch (error) {
+    console.error('Failed to generate AI suggestions, using fallback:', error)
+    return generateFallbackSuggestions(title, industry)
+  }
+}
+
+// Fallback function for when AI service is unavailable
+function generateFallbackSuggestions(title: string, industry: string): SuggestionSet {
   const seed = generateHash(title + industry)
   const keyTerms = extractKeyTerms(title)
   const industryLower = industry.toLowerCase()
   const industryTerms = industryKeywords[industryLower as keyof typeof industryKeywords] || []
   
   // Generate context suggestions
+  const contextScenarios = [
+    'current market challenges and opportunities',
+    'industry trends and disruptions',
+    'regulatory landscape and compliance requirements',
+    'technology adoption barriers and drivers',
+    'competitive landscape analysis',
+    'stakeholder needs and expectations',
+    'operational efficiency gaps',
+    'customer experience pain points',
+    'risk factors and mitigation strategies',
+    'emerging opportunities and threats'
+  ]
+  
+  const solutionFrameworks = [
+    'comprehensive strategy framework',
+    'step-by-step implementation methodology',
+    'best practices and proven approaches',
+    'technology-driven solution architecture',
+    'risk mitigation and governance model',
+    'performance measurement framework',
+    'stakeholder engagement strategy',
+    'change management approach',
+    'scalable implementation roadmap',
+    'cost-benefit analysis model'
+  ]
+  
   const contextSuggestions: string[] = []
   
   for (let i = 0; i < 3; i++) {
     const scenarioIndex = Math.floor(seededRandom(seed + i, 0, contextScenarios.length))
     const scenario = contextScenarios[scenarioIndex]
     
-    // Incorporate key terms and industry-specific elements
     let suggestion = `Analyzing ${scenario} in the context of ${keyTerms.join(', ')} within the ${industry.toLowerCase()} sector`
     
     if (industryTerms.length > 0) {
@@ -133,20 +145,21 @@ export const generateUniqueSuggestions = (title: string, industry: string): Sugg
 }
 
 // Additional utility for generating executive summary suggestions
-export const generateExecutiveSuggestions = (title: string, industry: string): string[] => {
-  const seed = generateHash(title + industry + 'executive')
-  const keyTerms = extractKeyTerms(title)
-  
-  const executiveTemplates = [
-    `Strategic imperative for ${industry.toLowerCase()} organizations to adopt`,
-    `Market opportunity analysis for`,
-    `Competitive advantage through implementation of`,
-    `ROI justification and business case for`,
-    `Risk assessment and mitigation strategies for`
-  ]
-  
-  return executiveTemplates.map((template, i) => {
+export const generateExecutiveSuggestions = async (title: string, industry: string): Promise<string[]> => {
+  try {
+    const suggestions = await generateUniqueSuggestions(title, industry)
+    return suggestions.context.map(context => 
+      `Executive summary: ${context.substring(0, 100)}...`
+    )
+  } catch (error) {
+    console.error('Failed to generate executive suggestions:', error)
+    const keyTerms = extractKeyTerms(title)
     const mainTerm = keyTerms[0] || title.split(' ')[0]
-    return `${template} ${mainTerm.toLowerCase()} initiatives`
-  }).slice(0, 3)
+    
+    return [
+      `Strategic imperative for ${industry.toLowerCase()} organizations to adopt ${mainTerm.toLowerCase()} initiatives`,
+      `Market opportunity analysis for ${mainTerm.toLowerCase()} implementation`,
+      `ROI justification and business case for ${mainTerm.toLowerCase()} solutions`
+    ]
+  }
 }
