@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -111,15 +112,21 @@ export default function Generate() {
     resetConversion
   } = useDocumentConversion()
 
-  const updateForm = (field: keyof GenerationForm, value: string) => {
+  const updateForm = async (field: keyof GenerationForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
     
     // Generate unique suggestions when title or industry changes
     if (field === 'title' || field === 'industry') {
       const newForm = { ...form, [field]: value }
       if (newForm.title && newForm.industry) {
-        const newSuggestions = generateUniqueSuggestions(newForm.title, newForm.industry)
-        setSuggestions(newSuggestions)
+        try {
+          const newSuggestions = await generateUniqueSuggestions(newForm.title, newForm.industry)
+          setSuggestions(newSuggestions)
+        } catch (error) {
+          console.error('Failed to generate suggestions:', error)
+          // Clear suggestions on error
+          setSuggestions({ context: [], solutionOutline: [] })
+        }
       }
     }
   }
