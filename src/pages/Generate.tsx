@@ -27,6 +27,7 @@ import { PdfViewer } from "@/components/PdfViewer"
 import { PagedWordEditor } from "@/components/PagedWordEditor"
 import { ConversionToolbar } from "@/components/ConversionToolbar"
 import { useDocumentConversion } from "@/hooks/useDocumentConversion"
+import { generateUniqueSuggestions } from "@/lib/suggestionGenerator"
 
 interface GenerationForm {
   title: string
@@ -113,11 +114,11 @@ export default function Generate() {
   const updateForm = (field: keyof GenerationForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
     
-    // Generate suggestions when title or industry changes
+    // Generate unique suggestions when title or industry changes
     if (field === 'title' || field === 'industry') {
       const newForm = { ...form, [field]: value }
       if (newForm.title && newForm.industry) {
-        const newSuggestions = generateSuggestions(newForm.title, newForm.industry)
+        const newSuggestions = generateUniqueSuggestions(newForm.title, newForm.industry)
         setSuggestions(newSuggestions)
       }
     }
@@ -135,15 +136,16 @@ export default function Generate() {
 
     setIsGeneratingSuggestions(true)
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Simulate API call delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
-      const newSuggestions = generateSuggestions(form.title, form.industry)
+      // Generate unique suggestions based on current title and industry
+      const newSuggestions = generateUniqueSuggestions(form.title, form.industry)
       setSuggestions(newSuggestions)
       
       toast({
-        title: "Suggestions generated",
-        description: "AI-powered suggestions are ready for your review.",
+        title: "AI suggestions generated",
+        description: "Unique suggestions tailored to your whitepaper topic are ready.",
       })
     } catch (error) {
       toast({
