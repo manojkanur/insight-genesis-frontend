@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,9 +12,10 @@ import { FileUploadZone } from './FileUploadZone'
 
 interface WhitepaperNormalizerProps {
   onComplete?: (result: any) => void
+  selectedTemplate?: string | null
 }
 
-export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) {
+export function WhitepaperNormalizer({ onComplete, selectedTemplate }: WhitepaperNormalizerProps) {
   const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -80,6 +80,11 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
             Whitepaper Normalizer
+            {selectedTemplate && (
+              <span className="text-sm font-normal text-muted-foreground">
+                (Template: {selectedTemplate})
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -116,12 +121,12 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
+            <Label htmlFor="description">Enter your prompt (Optional)</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter whitepaper description..."
+              placeholder="Enter your prompt for whitepaper customization..."
               rows={3}
               disabled={isNormalizing}
             />
