@@ -53,16 +53,16 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
     
     switch (viewMode) {
       case 'fit-page':
-        url += '&zoom=page-fit'
+        url += '&view=Fit'
         break
       case 'fit-width':
-        url += '&zoom=page-width'
+        url += '&view=FitH'
         break
       case 'custom':
         url += `&zoom=${zoom}`
         break
       default:
-        url += '&zoom=page-fit'
+        url += '&view=Fit'
     }
     
     return url
@@ -133,7 +133,7 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
         </div>
       </div>
       
-      <CardContent className="p-0 relative flex-1 overflow-auto">
+      <CardContent className="p-0 relative flex-1 overflow-hidden">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
             <div className="flex items-center gap-2">
@@ -144,6 +144,7 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
         )}
         
         <iframe
+          key={`${getPdfUrl()}-${viewMode}-${zoom}`}
           src={getPdfUrl()}
           className="w-full h-full border-0"
           onLoad={handleLoad}
