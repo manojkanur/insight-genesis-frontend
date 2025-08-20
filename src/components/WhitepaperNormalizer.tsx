@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { FileText, Upload, RefreshCw, Edit, Check, Download } from 'lucide-react'
+import { FileText, RefreshCw, Edit, Check, Download, AlertCircle } from 'lucide-react'
 import { useWhitepaperNormalization } from '@/hooks/useWhitepaperNormalization'
 import { RichTextEditor } from './RichTextEditor'
 import { PdfViewer } from './PdfViewer'
+import { FileUploadZone } from './FileUploadZone'
 
 interface WhitepaperNormalizerProps {
   onComplete?: (result: any) => void
@@ -43,15 +44,12 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
     resetNormalization
   } = useWhitepaperNormalization()
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setSelectedFile(file)
-      // Auto-generate title from filename if not set
-      if (!title) {
-        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
-        setTitle(nameWithoutExt.replace(/[_-]/g, ' '))
-      }
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file)
+    // Auto-generate title from filename if not set
+    if (file && !title) {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
+      setTitle(nameWithoutExt.replace(/[_-]/g, ' '))
     }
   }
 
@@ -118,33 +116,37 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
             Whitepaper Normalizer
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="file">Document *</Label>
-            <Input
-              id="file"
-              type="file"
-              accept=".pdf,.docx,.md,.txt"
-              onChange={handleFileSelect}
-              disabled={isNormalizing}
-            />
-            {selectedFile && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <FileText className="w-4 h-4" />
-                {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-              </div>
-            )}
-          </div>
+        <CardContent className="space-y-6">
+          <FileUploadZone
+            onFileSelect={handleFileSelect}
+            selectedFile={selectedFile}
+            disabled={isNormalizing}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter whitepaper title..."
-              disabled={isNormalizing}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter whitepaper title..."
+                disabled={isNormalizing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mode">Processing Mode</Label>
+              <Select value={mode} onValueChange={(value: 'llm' | 'fast') => setMode(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="llm">LLM Mode (Better quality)</SelectItem>
+                  <SelectItem value="fast">Fast Mode (Quick processing)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -159,23 +161,11 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="mode">Processing Mode</Label>
-            <Select value={mode} onValueChange={(value: 'llm' | 'fast') => setMode(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="llm">LLM Mode (Better quality)</SelectItem>
-                <SelectItem value="fast">Fast Mode (Quick processing)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <Button
             onClick={handleNormalize}
             disabled={!selectedFile || !title.trim() || isNormalizing}
             className="w-full"
+            size="lg"
           >
             {isNormalizing ? (
               <>
@@ -184,15 +174,26 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
               </>
             ) : (
               <>
-                <Upload className="w-4 h-4 mr-2" />
+                <FileText className="w-4 h-4 mr-2" />
                 Normalize Whitepaper
               </>
             )}
           </Button>
 
           {error && (
-            <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-              {error}
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <div className="space-y-1">
+                  <p className="font-medium">Normalization Failed</p>
+                  <p className="text-sm">{error}</p>
+                  {error.includes("No recognizable sector sections") && (
+                    <p className="text-xs mt-2 opacity-90">
+                      Make sure your document contains sections for: Digital Marketing, Healthcare, Information Technology (IT), or Logistics.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
