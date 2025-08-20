@@ -53,16 +53,16 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
     
     switch (viewMode) {
       case 'fit-page':
-        url += '&view=Fit'
+        url += '&zoom=page-fit'
         break
       case 'fit-width':
-        url += '&view=FitH'
+        url += '&zoom=page-width'
         break
       case 'custom':
         url += `&zoom=${zoom}`
         break
       default:
-        url += '&view=Fit'
+        url += '&zoom=page-fit'
     }
     
     return url
