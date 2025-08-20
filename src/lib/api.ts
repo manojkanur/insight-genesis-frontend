@@ -60,6 +60,16 @@ export interface UploadResponse {
   message: string
 }
 
+export interface NormalizeResponse {
+  message: string
+  pdf_url: string
+  id: string
+  stats: {
+    sectors_detected: string[]
+    mode: string
+  }
+}
+
 export interface PdfContent {
   title: string
   abstract: string
@@ -164,6 +174,44 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
         if (progressEvent.total) {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
           console.log(`📤 Upload Progress: ${percentCompleted}%`)
+        }
+      },
+    })
+
+    return response.data
+  } catch (error) {
+    handleApiError(error as AxiosError)
+  }
+}
+
+/**
+ * Normalize whitepaper document
+ */
+export const normalizeWhitepaper = async (data: {
+  document: File
+  title: string
+  description?: string
+  mode?: 'llm' | 'fast'
+}): Promise<NormalizeResponse> => {
+  try {
+    const formData = new FormData()
+    formData.append('document', data.document)
+    formData.append('title', data.title)
+    if (data.description) {
+      formData.append('description', data.description)
+    }
+    if (data.mode) {
+      formData.append('mode', data.mode)
+    }
+
+    const response = await apiClient.post<NormalizeResponse>('/api/normalize', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          console.log(`📤 Normalize Progress: ${percentCompleted}%`)
         }
       },
     })
