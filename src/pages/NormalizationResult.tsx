@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -194,7 +193,7 @@ export default function NormalizationResult() {
         </CardContent>
       </Card>
 
-      {/* Main Content - Significantly increased PDF viewer height */}
+      {/* Main Content - Extremely increased PDF viewer height for browser extension */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="pdf" className="text-lg py-3">
@@ -215,7 +214,7 @@ export default function NormalizationResult() {
         <TabsContent value="pdf" className="space-y-0">
           <Card>
             <CardContent className="p-0">
-              <PdfViewer pdfUrl={pdfUrl} className="h-[95vh] min-h-[900px]" />
+              <PdfViewer pdfUrl={pdfUrl} className="h-[2100px] min-h-[2100px]" />
             </CardContent>
           </Card>
         </TabsContent>
