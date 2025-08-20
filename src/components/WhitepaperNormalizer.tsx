@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,7 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
 import { RefreshCw, FileText, AlertCircle, Lightbulb, Loader2 } from 'lucide-react'
 import { useWhitepaperNormalization } from '@/hooks/useWhitepaperNormalization'
 import { FileUploadZone } from './FileUploadZone'
@@ -19,26 +17,12 @@ interface WhitepaperNormalizerProps {
   selectedTemplate?: string | null
 }
 
-const availableSectors = [
-  { id: 'digital-marketing', label: 'Digital Marketing' },
-  { id: 'healthcare', label: 'Healthcare' },
-  { id: 'it', label: 'Information Technology (IT)' },
-  { id: 'logistics', label: 'Logistics' },
-  { id: 'finance', label: 'Finance' },
-  { id: 'education', label: 'Education' },
-  { id: 'manufacturing', label: 'Manufacturing' },
-  { id: 'retail', label: 'Retail' },
-  { id: 'energy', label: 'Energy' },
-  { id: 'real-estate', label: 'Real Estate' }
-]
-
 export function WhitepaperNormalizer({ onComplete, selectedTemplate }: WhitepaperNormalizerProps) {
   const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [mode, setMode] = useState<'llm' | 'fast'>('llm')
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([])
   const [promptSuggestions, setPromptSuggestions] = useState<string[]>([])
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false)
   const [hasGeneratedSuggestions, setHasGeneratedSuggestions] = useState(false)
@@ -59,14 +43,6 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
       const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
       setTitle(nameWithoutExt.replace(/[_-]/g, ' '))
     }
-  }
-
-  const handleSectorChange = (sectorId: string, checked: boolean) => {
-    setSelectedSectors(prev => 
-      checked 
-        ? [...prev, sectorId]
-        : prev.filter(id => id !== sectorId)
-    )
   }
 
   const generatePromptSuggestions = async () => {
@@ -139,8 +115,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
         document: selectedFile,
         title: title.trim(),
         description: description.trim() || undefined,
-        mode,
-        sectors: selectedSectors
+        mode
       })
 
       onComplete?.(result)
@@ -164,7 +139,6 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
     setSelectedFile(null)
     setTitle('')
     setDescription('')
-    setSelectedSectors([])
     setPromptSuggestions([])
     setHasGeneratedSuggestions(false)
   }
@@ -176,7 +150,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Whitepaper Generator
+            Whitepaper Normalizer
             {selectedTemplate && (
               <span className="text-sm font-normal text-muted-foreground">
                 (Template: {selectedTemplate})
@@ -215,38 +189,6 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label>Choose Sectors (Optional)</Label>
-            <p className="text-sm text-muted-foreground">
-              Select the industry sectors you want your whitepaper to focus on
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {availableSectors.map((sector) => (
-                <div key={sector.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={sector.id}
-                    checked={selectedSectors.includes(sector.id)}
-                    onCheckedChange={(checked) => handleSectorChange(sector.id, checked === true)}
-                    disabled={isNormalizing}
-                  />
-                  <Label 
-                    htmlFor={sector.id} 
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {sector.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-            {selectedSectors.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Selected: {selectedSectors.map(id => 
-                  availableSectors.find(s => s.id === id)?.label
-                ).join(', ')}
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">

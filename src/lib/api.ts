@@ -192,7 +192,6 @@ export const normalizeWhitepaper = async (data: {
   title: string
   description?: string
   mode?: 'llm' | 'fast'
-  sectors?: string[]
 }): Promise<NormalizeResponse> => {
   try {
     const formData = new FormData()
@@ -203,9 +202,6 @@ export const normalizeWhitepaper = async (data: {
     }
     if (data.mode) {
       formData.append('mode', data.mode)
-    }
-    if (data.sectors && data.sectors.length > 0) {
-      formData.append('sectors', JSON.stringify(data.sectors))
     }
 
     const response = await apiClient.post<NormalizeResponse>('/api/normalize', formData, {
