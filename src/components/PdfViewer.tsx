@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -92,7 +91,7 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
   }
 
   return (
-    <Card className={`${className} flex flex-col h-full`}>
+    <Card className={`${className} flex flex-col`}>
       <div className="flex items-center justify-between p-3 border-b shrink-0">
         <div className="flex items-center gap-2">
           <Button
