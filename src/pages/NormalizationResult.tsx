@@ -194,7 +194,7 @@ export default function NormalizationResult() {
         </CardContent>
       </Card>
 
-      {/* Main Content - Updated PDF viewer height */}
+      {/* Main Content - Significantly increased PDF viewer height */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="pdf" className="text-lg py-3">
@@ -215,7 +215,7 @@ export default function NormalizationResult() {
         <TabsContent value="pdf" className="space-y-0">
           <Card>
             <CardContent className="p-0">
-              <PdfViewer pdfUrl={pdfUrl} className="h-[80vh] min-h-[720px]" />
+              <PdfViewer pdfUrl={pdfUrl} className="h-[95vh] min-h-[900px]" />
             </CardContent>
           </Card>
         </TabsContent>
