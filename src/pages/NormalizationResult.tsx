@@ -194,7 +194,7 @@ export default function NormalizationResult() {
         </CardContent>
       </Card>
 
-      {/* Main Content */}
+      {/* Main Content - Increased height for PDF viewer */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="pdf" className="text-lg py-3">
@@ -215,7 +215,7 @@ export default function NormalizationResult() {
         <TabsContent value="pdf" className="space-y-0">
           <Card>
             <CardContent className="p-0">
-              <PdfViewer pdfUrl={pdfUrl} className="h-[800px]" />
+              <PdfViewer pdfUrl={pdfUrl} className="h-[calc(100vh-300px)] min-h-[800px]" />
             </CardContent>
           </Card>
         </TabsContent>
@@ -233,7 +233,7 @@ export default function NormalizationResult() {
                 <RichTextEditor
                   value={editedContent}
                   onChange={updateContent}
-                  height="700px"
+                  height="calc(100vh-400px)"
                   placeholder="Edit your normalized whitepaper content here..."
                 />
               </CardContent>

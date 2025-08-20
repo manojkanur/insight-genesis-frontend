@@ -72,16 +72,16 @@ export function useWhitepaperNormalization() {
   }, [toast])
 
   const convertToWordForEditing = useCallback(async (pdfUrl: string) => {
-    if (!state.normalizedData) return
-
     try {
       // Use the document conversion hook to convert the normalized PDF to Word
-      await documentConverter.convertPdfToWord(pdfUrl)
+      const result = await documentConverter.convertPdfToWord(pdfUrl)
       
       toast({
         title: "Ready for editing",
         description: "Your normalized whitepaper is now ready for editing.",
       })
+
+      return result
     } catch (error) {
       toast({
         title: "Conversion failed",
@@ -90,7 +90,7 @@ export function useWhitepaperNormalization() {
       })
       throw error
     }
-  }, [state.normalizedData, documentConverter, toast])
+  }, [documentConverter, toast])
 
   const resetNormalization = useCallback(() => {
     setState({
