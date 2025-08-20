@@ -102,11 +102,15 @@ export function PdfViewer({ pdfUrl, className = "" }: PdfViewerProps) {
         )}
         
         <iframe
-          src={`${pdfUrl}#zoom=${zoom}`}
+          src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&zoom=${zoom}`}
           className="w-full h-full border-0"
           onLoad={handleLoad}
           onError={handleError}
           title="PDF Preview"
+          style={{
+            minHeight: '100%',
+            backgroundColor: '#f8f9fa'
+          }}
         />
       </CardContent>
     </Card>
