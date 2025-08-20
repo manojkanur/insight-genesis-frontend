@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Generate from "./pages/Generate";
 import Chat from "./pages/Chat";
+import NormalizationResult from "./pages/NormalizationResult";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/upload" element={<Layout><Upload /></Layout>} />
           <Route path="/generate" element={<Layout><Generate /></Layout>} />
           <Route path="/chat" element={<Layout><Chat /></Layout>} />
+          <Route path="/normalization-result" element={<Layout><NormalizationResult /></Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

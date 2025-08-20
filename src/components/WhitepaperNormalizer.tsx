@@ -1,17 +1,14 @@
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { FileText, RefreshCw, Edit, Check, Download, AlertCircle } from 'lucide-react'
+import { RefreshCw, FileText, AlertCircle } from 'lucide-react'
 import { useWhitepaperNormalization } from '@/hooks/useWhitepaperNormalization'
-import { RichTextEditor } from './RichTextEditor'
-import { PdfViewer } from './PdfViewer'
 import { FileUploadZone } from './FileUploadZone'
 
 interface WhitepaperNormalizerProps {
@@ -19,28 +16,16 @@ interface WhitepaperNormalizerProps {
 }
 
 export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) {
+  const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [mode, setMode] = useState<'llm' | 'fast'>('llm')
-  const [showEditor, setShowEditor] = useState(false)
 
   const {
     isNormalizing,
-    isNormalized,
-    normalizedData,
     error,
-    isConverting,
-    isConverted,
-    wordContent,
-    editedContent,
-    hasUnsavedChanges,
-    conversionProgress,
     normalizeDocument,
-    convertToWordForEditing,
-    updateContent,
-    exportToPdf,
-    exportToWord,
     resetNormalization
   } = useWhitepaperNormalization()
 
@@ -63,47 +48,28 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
         description: description.trim() || undefined,
         mode
       })
+
       onComplete?.(result)
+
+      // Navigate to the result page with the normalized data
+      const params = new URLSearchParams({
+        pdfUrl: result.pdf_url,
+        sectors: result.stats.sectors_detected.join(','),
+        mode: result.stats.mode,
+        title: title.trim()
+      })
+      
+      navigate(`/normalization-result?${params.toString()}`)
     } catch (error) {
       console.error('Normalization failed:', error)
     }
   }
 
-  const handleConvertToWord = async () => {
-    if (!normalizedData?.pdf_url) return
-
-    try {
-      await convertToWordForEditing(normalizedData.pdf_url)
-      setShowEditor(true)
-    } catch (error) {
-      console.error('Conversion failed:', error)
-    }
-  }
-
-  const handleExportPdf = async () => {
-    if (!editedContent) return
-
-    try {
-      await exportToPdf(
-        `${title.replace(/\s+/g, '_')}_edited.pdf`,
-        editedContent
-      )
-    } catch (error) {
-      console.error('PDF export failed:', error)
-    }
-  }
-
-  const handleExportWord = async () => {
-    if (!editedContent) return
-
-    try {
-      await exportToWord(
-        `${title.replace(/\s+/g, '_')}_edited`,
-        editedContent
-      )
-    } catch (error) {
-      console.error('Word export failed:', error)
-    }
+  const handleReset = () => {
+    resetNormalization()
+    setSelectedFile(null)
+    setTitle('')
+    setDescription('')
   }
 
   return (
@@ -196,138 +162,16 @@ export function WhitepaperNormalizer({ onComplete }: WhitepaperNormalizerProps) 
               </div>
             </div>
           )}
+
+          {error && (
+            <div className="flex justify-center">
+              <Button onClick={handleReset} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Results */}
-      {isNormalized && normalizedData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-green-600" />
-              Normalization Complete
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                {normalizedData.stats.sectors_detected.length} sectors detected
-              </Badge>
-              <Badge variant="outline">
-                Mode: {normalizedData.stats.mode.toUpperCase()}
-              </Badge>
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                onClick={handleConvertToWord}
-                disabled={isConverting}
-                variant="outline"
-              >
-                {isConverting ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Converting...
-                  </>
-                ) : (
-                  <>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Convert to Editable Format
-                  </>
-                )}
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => window.open(normalizedData.pdf_url, '_blank')}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
-              </Button>
-            </div>
-
-            {/* Conversion Progress */}
-            {isConverting && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Converting to editable format...</span>
-                  <span>{conversionProgress}%</span>
-                </div>
-                <Progress value={conversionProgress} />
-              </div>
-            )}
-
-            {/* PDF Preview */}
-            <div className="mt-4">
-              <PdfViewer pdfUrl={normalizedData.pdf_url} className="h-96" />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Word Editor */}
-      {isConverted && wordContent && showEditor && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Edit className="w-5 h-5" />
-                Edit Document Content
-              </div>
-              <div className="flex items-center gap-2">
-                {hasUnsavedChanges && (
-                  <Badge variant="outline" className="text-orange-600">
-                    Unsaved changes
-                  </Badge>
-                )}
-                <Button
-                  onClick={handleExportPdf}
-                  size="sm"
-                  disabled={!editedContent}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export PDF
-                </Button>
-                <Button
-                  onClick={handleExportWord}
-                  size="sm"
-                  variant="outline"
-                  disabled={!editedContent}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Word
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RichTextEditor
-              value={editedContent}
-              onChange={updateContent}
-              height="600px"
-              placeholder="Edit your normalized whitepaper content here..."
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Reset Button */}
-      {(isNormalized || error) && (
-        <div className="flex justify-center">
-          <Button
-            onClick={() => {
-              resetNormalization()
-              setSelectedFile(null)
-              setTitle('')
-              setDescription('')
-              setShowEditor(false)
-            }}
-            variant="outline"
-          >
-            Start New Normalization
-          </Button>
-        </div>
-      )}
     </div>
   )
 }
