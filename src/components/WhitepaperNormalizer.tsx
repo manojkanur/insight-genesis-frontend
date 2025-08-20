@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -271,7 +272,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
                   <p className="text-sm">{error}</p>
                   {error.includes("No recognizable sector sections") && (
                     <p className="text-xs mt-2 opacity-90">
-                      Make sure your document contains clear sections and content that can be structured into a whitepaper format. The system looks for identifiable content areas to organize your document properly.
+                      Make sure your document contains sections for: Digital Marketing, Healthcare, Information Technology (IT), or Logistics.
                     </p>
                   )}
                 </div>
