@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { useLocation, Link } from "react-router-dom"
 import {
@@ -15,19 +16,17 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 interface NavItem {
   title: string
   url: string
   icon: LucideIcon
-  children?: Omit<NavItem, 'icon' | 'children'>[]
 }
 
 export function AppSidebar() {
   const location = useLocation()
 
-  const navigation = [
+  const navigation: NavItem[] = [
     {
       title: "Dashboard",
       url: "/",
@@ -69,41 +68,21 @@ export function AppSidebar() {
         </Link>
       </div>
 
-      <Accordion type="multiple" className="flex-1 space-y-1">
+      <div className="flex-1 space-y-1">
         {navigation.map((item) => (
-          item.children ? (
-            <AccordionItem value={item.title} key={item.title}>
-              <AccordionTrigger className="text-base font-medium">{item.title}</AccordionTrigger>
-              <AccordionContent className="pl-4">
-                {item.children.map((child) => (
-                  <Link
-                    key={child.title}
-                    to={child.url}
-                    className={cn(
-                      "flex items-center space-x-2 py-2 text-sm font-medium hover:underline",
-                      location.pathname === child.url ? "text-primary" : "text-muted-foreground"
-                    )}
-                  >
-                    {child.title}
-                  </Link>
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-          ) : (
-            <Link
-              key={item.title}
-              to={item.url}
-              className={cn(
-                "flex items-center space-x-2 py-2 px-4 text-base font-medium hover:underline",
-                location.pathname === item.url ? "bg-secondary text-primary" : "text-muted-foreground"
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              <span>{item.title}</span>
-            </Link>
-          )
+          <Link
+            key={item.title}
+            to={item.url}
+            className={cn(
+              "flex items-center space-x-2 py-2 px-4 text-base font-medium hover:underline",
+              location.pathname === item.url ? "bg-secondary text-primary" : "text-muted-foreground"
+            )}
+          >
+            <item.icon className="w-4 h-4" />
+            <span>{item.title}</span>
+          </Link>
         ))}
-      </Accordion>
+      </div>
 
       <div className="mt-auto px-4">
         <Link to="/settings" className="flex items-center space-x-2 py-2 text-sm font-medium hover:underline text-muted-foreground">
