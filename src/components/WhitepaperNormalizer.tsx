@@ -7,11 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RefreshCw, FileText, AlertCircle, Lightbulb, Loader2 } from 'lucide-react'
+import { RefreshCw, FileText, AlertCircle } from 'lucide-react'
 import { useWhitepaperNormalization } from '@/hooks/useWhitepaperNormalization'
 import { FileUploadZone } from './FileUploadZone'
-import { groqAI } from '@/lib/aiService'
-import { useToast } from '@/hooks/use-toast'
 
 interface WhitepaperNormalizerProps {
   onComplete?: (result: any) => void
@@ -23,12 +21,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [mode, setMode] = useState<'llm' | 'fast'>('llm')
-  const [promptSuggestions, setPromptSuggestions] = useState<string[]>([])
-  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false)
-  const [hasGeneratedSuggestions, setHasGeneratedSuggestions] = useState(false)
-
-  const { toast } = useToast()
+  const [mode, setMode] = useState<string>('active-speaker')
 
   const {
     isNormalizing,
@@ -46,68 +39,6 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
     }
   }
 
-  const generatePromptSuggestions = async () => {
-    if (!title.trim()) {
-      toast({
-        title: "Missing Title",
-        description: "Please enter a title to generate prompt suggestions.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    setIsGeneratingSuggestions(true)
-    
-    try {
-      // Use a generic industry for prompt generation if not specified
-      const suggestions = await groqAI.generateSuggestions(title, 'Business')
-      
-      // Create prompt suggestions from the AI response
-      const promptSuggestions = [
-        `Transform this document into a comprehensive whitepaper focusing on ${title.toLowerCase()} with detailed analysis and actionable insights.`,
-        `Create a professional whitepaper that explores the key challenges and solutions related to ${title.toLowerCase()}.`,
-        `Generate a structured whitepaper that provides expert guidance on ${title.toLowerCase()} implementation and best practices.`,
-        ...suggestions.context.slice(0, 2).map(context => 
-          `Please focus on: ${context.toLowerCase()}`
-        ),
-        ...suggestions.solutionOutline.slice(0, 2).map(solution => 
-          `Include: ${solution.toLowerCase()}`
-        )
-      ]
-      
-      setPromptSuggestions(promptSuggestions)
-      setHasGeneratedSuggestions(true)
-      
-      toast({
-        title: "Suggestions Generated",
-        description: "AI has generated prompt suggestions based on your title.",
-      })
-    } catch (error) {
-      console.error('Error generating suggestions:', error)
-      
-      // Fallback suggestions
-      const fallbackSuggestions = [
-        `Transform this document into a comprehensive whitepaper focusing on ${title.toLowerCase()} with detailed analysis and actionable insights.`,
-        `Create a professional whitepaper that explores the key challenges and solutions related to ${title.toLowerCase()}.`,
-        `Generate a structured whitepaper that provides expert guidance on ${title.toLowerCase()} implementation and best practices.`
-      ]
-      
-      setPromptSuggestions(fallbackSuggestions)
-      setHasGeneratedSuggestions(true)
-      
-      toast({
-        title: "Suggestions Generated",
-        description: "Generated fallback prompt suggestions for your whitepaper.",
-      })
-    } finally {
-      setIsGeneratingSuggestions(false)
-    }
-  }
-
-  const selectSuggestion = (suggestion: string) => {
-    setDescription(suggestion)
-  }
-
   const handleNormalize = async () => {
     if (!selectedFile || !title.trim()) return
 
@@ -116,7 +47,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
         document: selectedFile,
         title: title.trim(),
         description: description.trim() || undefined,
-        mode
+        mode: mode as 'llm' | 'fast'
       })
 
       onComplete?.(result)
@@ -140,8 +71,6 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
     setSelectedFile(null)
     setTitle('')
     setDescription('')
-    setPromptSuggestions([])
-    setHasGeneratedSuggestions(false)
   }
 
   return (
@@ -179,70 +108,35 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mode">Processing Mode</Label>
-              <Select value={mode} onValueChange={(value: 'llm' | 'fast') => setMode(value)}>
+              <Label htmlFor="mode">Prompt</Label>
+              <Select value={mode} onValueChange={(value: string) => setMode(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="llm">LLM Mode (Better quality)</SelectItem>
-                  <SelectItem value="fast">Fast Mode (Quick processing)</SelectItem>
+                  <SelectItem value="active-speaker">Active Speaker</SelectItem>
+                  <SelectItem value="passive-speaker">Passive Speaker</SelectItem>
+                  <SelectItem value="direct-speaker">Direct Speaker</SelectItem>
+                  <SelectItem value="indirect-speaker">Indirect Speaker</SelectItem>
+                  <SelectItem value="first-person-speaker">First Person Speaker</SelectItem>
+                  <SelectItem value="second-person-speaker">Second Person Speaker</SelectItem>
+                  <SelectItem value="third-person-speaker">Third Person Speaker</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="description">Enter your prompt (Optional)</Label>
-              <Button
-                onClick={generatePromptSuggestions}
-                disabled={isGeneratingSuggestions || !title.trim() || isNormalizing}
-                variant="outline"
-                size="sm"
-              >
-                {isGeneratingSuggestions ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Lightbulb className="w-4 h-4 mr-2" />
-                    Get AI Suggestions
-                  </>
-                )}
-              </Button>
-            </div>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter your prompt for whitepaper customization..."
+              placeholder="Enter description for whitepaper customization..."
               rows={3}
               disabled={isNormalizing}
             />
           </div>
-
-          {hasGeneratedSuggestions && promptSuggestions.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Click on any suggestion to use it as your prompt:
-              </p>
-              
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {promptSuggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => selectSuggestion(suggestion)}
-                  >
-                    <p className="text-sm">{suggestion}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           <Button
             onClick={handleNormalize}
