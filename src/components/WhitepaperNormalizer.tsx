@@ -124,7 +124,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
               id="prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter your prompt..."
+              placeholder="Eg; Make the document into Direct speaker"
               rows={3}
               disabled={isNormalizing}
             />
