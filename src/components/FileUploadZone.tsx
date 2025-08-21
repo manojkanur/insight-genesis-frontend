@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -63,7 +62,7 @@ export function FileUploadZone({ onFileSelect, selectedFile, disabled, accept = 
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="file">Document *</Label>
+      <Label htmlFor="file">Document</Label>
       <Card
         className={cn(
           "relative transition-all duration-200 cursor-pointer",
