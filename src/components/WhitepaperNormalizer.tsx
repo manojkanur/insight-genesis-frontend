@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RefreshCw, FileText, AlertCircle } from 'lucide-react'
 import { useWhitepaperNormalization } from '@/hooks/useWhitepaperNormalization'
 import { FileUploadZone } from './FileUploadZone'
@@ -21,7 +20,6 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [mode, setMode] = useState<string>('active-speaker')
 
   const {
     isNormalizing,
@@ -47,7 +45,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
         document: selectedFile,
         title: title.trim(),
         description: description.trim() || undefined,
-        mode: mode as 'llm' | 'fast'
+        mode: 'llm'
       })
 
       onComplete?.(result)
@@ -95,35 +93,15 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
             disabled={isNormalizing}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter whitepaper title..."
-                disabled={isNormalizing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mode">Prompt</Label>
-              <Select value={mode} onValueChange={(value: string) => setMode(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active-speaker">Active Speaker</SelectItem>
-                  <SelectItem value="passive-speaker">Passive Speaker</SelectItem>
-                  <SelectItem value="direct-speaker">Direct Speaker</SelectItem>
-                  <SelectItem value="indirect-speaker">Indirect Speaker</SelectItem>
-                  <SelectItem value="first-person-speaker">First Person Speaker</SelectItem>
-                  <SelectItem value="second-person-speaker">Second Person Speaker</SelectItem>
-                  <SelectItem value="third-person-speaker">Third Person Speaker</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter whitepaper title..."
+              disabled={isNormalizing}
+            />
           </div>
 
           <div className="space-y-2">
