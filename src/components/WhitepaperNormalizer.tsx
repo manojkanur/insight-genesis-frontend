@@ -20,6 +20,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [prompt, setPrompt] = useState('')
 
   const {
     isNormalizing,
@@ -38,7 +39,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
   }
 
   const handleNormalize = async () => {
-    if (!selectedFile || !title.trim()) return
+    if (!title.trim()) return
 
     try {
       const result = await normalizeDocument({
@@ -69,6 +70,7 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
     setSelectedFile(null)
     setTitle('')
     setDescription('')
+    setPrompt('')
   }
 
   return (
@@ -116,9 +118,21 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="prompt">Prompt</Label>
+            <Textarea
+              id="prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Enter your prompt..."
+              rows={3}
+              disabled={isNormalizing}
+            />
+          </div>
+
           <Button
             onClick={handleNormalize}
-            disabled={!selectedFile || !title.trim() || isNormalizing}
+            disabled={!title.trim() || isNormalizing}
             className="w-full"
             size="lg"
           >
