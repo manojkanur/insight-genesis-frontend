@@ -23,9 +23,10 @@ export function useWhitepaperNormalization() {
   const documentConverter = useDocumentConversion()
 
   const normalizeDocument = useCallback(async (data: {
-    document: File
+    document?: File | null
     title: string
     description?: string
+    prompt?: string
     mode?: 'llm' | 'fast'
   }) => {
     setState(prev => ({ 
@@ -37,7 +38,7 @@ export function useWhitepaperNormalization() {
     }))
 
     try {
-      const result = await normalizeWhitepaper(data)
+      const result = await normalizeWhitepaper(data as any)
       
       setState(prev => ({
         ...prev,
@@ -48,7 +49,7 @@ export function useWhitepaperNormalization() {
 
       toast({
         title: "Document normalized successfully",
-        description: `Whitepaper generated with ${result.stats.sectors_detected.length} sectors detected.`,
+        description: result?.message || "Your document has been processed.",
       })
 
       return result

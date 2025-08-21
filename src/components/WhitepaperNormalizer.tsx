@@ -43,9 +43,10 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
 
     try {
       const result = await normalizeDocument({
-        document: selectedFile,
+        document: selectedFile ?? undefined,
         title: title.trim(),
         description: description.trim() || undefined,
+        prompt: prompt.trim() || undefined,
         mode: 'llm'
       })
 
@@ -54,10 +55,16 @@ export function WhitepaperNormalizer({ onComplete, selectedTemplate }: Whitepape
       // Navigate to the result page with the normalized data
       const params = new URLSearchParams({
         pdfUrl: result.pdf_url,
-        sectors: result.stats.sectors_detected.join(','),
-        mode: result.stats.mode,
-        title: title.trim()
+        title: title.trim(),
       })
+
+      // Optionally include stats if backend provides them
+      if ((result as any)?.stats?.sectors_detected?.length) {
+        params.set('sectors', (result as any).stats.sectors_detected.join(','))
+      }
+      if ((result as any)?.stats?.mode) {
+        params.set('mode', (result as any).stats.mode)
+      }
       
       navigate(`/normalization-result?${params.toString()}`)
     } catch (error) {

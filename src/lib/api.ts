@@ -1,3 +1,4 @@
+
 import axios, { AxiosResponse, AxiosError } from 'axios'
 
 // API Configuration
@@ -38,7 +39,7 @@ apiClient.interceptors.response.use(
       console.error('Unauthorized access - consider redirecting to login')
     } else if (error.response?.status === 403) {
       console.error('Forbidden access')
-    } else if (error.response?.status >= 500) {
+    } else if ((error.response?.status || 0) >= 500) {
       console.error('Server error - please try again later')
     }
     
@@ -61,13 +62,16 @@ export interface UploadResponse {
 }
 
 export interface NormalizeResponse {
-  message: string
+  message?: string
   pdf_url: string
   id: string
-  stats: {
+  // old shape (backward compatible)
+  stats?: {
     sectors_detected: string[]
     mode: string
   }
+  // new shape fields (optional)
+  applied?: any
 }
 
 export interface PdfContent {
@@ -188,18 +192,27 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
  * Normalize whitepaper document
  */
 export const normalizeWhitepaper = async (data: {
-  document: File
+  document?: File | null
   title: string
   description?: string
+  prompt?: string
   mode?: 'llm' | 'fast'
 }): Promise<NormalizeResponse> => {
   try {
     const formData = new FormData()
-    formData.append('document', data.document)
-    formData.append('title', data.title)
+    // Backend expects "file" when uploading
+    if (data.document) {
+      formData.append('file', data.document)
+    }
+    // Description is optional (used when no file)
     if (data.description) {
       formData.append('description', data.description)
     }
+    // Always send a prompt; use a safe default if not provided to satisfy backend
+    formData.append('prompt', (data.prompt && data.prompt.trim()) ? data.prompt : 'Rewrite the text cleanly and generate a well-formatted PDF.')
+
+    // Title and mode are optional for backend; include for traceability if present
+    formData.append('title', data.title)
     if (data.mode) {
       formData.append('mode', data.mode)
     }
